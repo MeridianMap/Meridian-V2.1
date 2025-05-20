@@ -1,0 +1,475 @@
+{
+  "aspects": [
+    {
+      "applying": false,
+      "aspect": "Sextile",
+      "orb": 4.948359475350571,
+      "planet1": "Sun",
+      "planet2": "Moon"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 4.832867867474533,
+      "planet1": "Sun",
+      "planet2": "Venus"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-sextile",
+      "orb": 0.8799302474115507,
+      "planet1": "Sun",
+      "planet2": "Mars"
+    },
+    {
+      "applying": true,
+      "aspect": "Opposition",
+      "orb": 5.905924088910979,
+      "planet1": "Sun",
+      "planet2": "Jupiter"
+    },
+    {
+      "applying": false,
+      "aspect": "Conjunction",
+      "orb": 4.655519130505752,
+      "planet1": "Sun",
+      "planet2": "Saturn"
+    },
+    {
+      "applying": false,
+      "aspect": "Conjunction",
+      "orb": 5.2286696422734735,
+      "planet1": "Sun",
+      "planet2": "Uranus"
+    },
+    {
+      "applying": false,
+      "aspect": "Conjunction",
+      "orb": 1.0193723246281365,
+      "planet1": "Sun",
+      "planet2": "Neptune"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-square",
+      "orb": 4.5288486827320185,
+      "planet1": "Moon",
+      "planet2": "Mercury"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 0.11549160787603796,
+      "planet1": "Moon",
+      "planet2": "Venus"
+    },
+    {
+      "applying": true,
+      "aspect": "Square",
+      "orb": 4.068429227939021,
+      "planet1": "Moon",
+      "planet2": "Mars"
+    },
+    {
+      "applying": true,
+      "aspect": "Trine",
+      "orb": 0.9575646135604075,
+      "planet1": "Moon",
+      "planet2": "Jupiter"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-square",
+      "orb": 5.396121394143677,
+      "planet1": "Moon",
+      "planet2": "Saturn"
+    },
+    {
+      "applying": false,
+      "aspect": "Sextile",
+      "orb": 0.2803101669229022,
+      "planet1": "Moon",
+      "planet2": "Uranus"
+    },
+    {
+      "applying": true,
+      "aspect": "Sextile",
+      "orb": 5.967731799978708,
+      "planet1": "Moon",
+      "planet2": "Neptune"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-square",
+      "orb": 0.46041945479299784,
+      "planet1": "Mercury",
+      "planet2": "Mars"
+    },
+    {
+      "applying": false,
+      "aspect": "Sextile",
+      "orb": 3.9529376200629827,
+      "planet1": "Venus",
+      "planet2": "Mars"
+    },
+    {
+      "applying": false,
+      "aspect": "Quincunx",
+      "orb": 1.0730562214364454,
+      "planet1": "Venus",
+      "planet2": "Jupiter"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 0.3958017747989402,
+      "planet1": "Venus",
+      "planet2": "Uranus"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-sextile",
+      "orb": 5.85224019210267,
+      "planet1": "Venus",
+      "planet2": "Neptune"
+    },
+    {
+      "applying": false,
+      "aspect": "Quincunx",
+      "orb": 5.025993841499428,
+      "planet1": "Mars",
+      "planet2": "Jupiter"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-sextile",
+      "orb": 5.535449377917303,
+      "planet1": "Mars",
+      "planet2": "Saturn"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 4.348739394861923,
+      "planet1": "Mars",
+      "planet2": "Uranus"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-sextile",
+      "orb": 1.8993025720396872,
+      "planet1": "Mars",
+      "planet2": "Neptune"
+    },
+    {
+      "applying": false,
+      "aspect": "Opposition",
+      "orb": 0.6772544466375052,
+      "planet1": "Jupiter",
+      "planet2": "Uranus"
+    },
+    {
+      "applying": false,
+      "aspect": "Sesquiquadrate",
+      "orb": 3.0218724867530113,
+      "planet1": "Jupiter",
+      "planet2": "Pluto"
+    },
+    {
+      "applying": true,
+      "aspect": "Sesquiquadrate",
+      "orb": 1.6967704768758836,
+      "planet1": "Jupiter",
+      "planet2": "North Node"
+    },
+    {
+      "applying": false,
+      "aspect": "Conjunction",
+      "orb": 3.6361468058776154,
+      "planet1": "Saturn",
+      "planet2": "Neptune"
+    },
+    {
+      "applying": true,
+      "aspect": "Sextile",
+      "orb": 1.416684293830258,
+      "planet1": "Saturn",
+      "planet2": "Pluto"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-sextile",
+      "orb": 2.7417863037073857,
+      "planet1": "Saturn",
+      "planet2": "North Node"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-square",
+      "orb": 3.6991269333905166,
+      "planet1": "Uranus",
+      "planet2": "Pluto"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-square",
+      "orb": 2.374024923513389,
+      "planet1": "Uranus",
+      "planet2": "North Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Sextile",
+      "orb": 5.052831099707873,
+      "planet1": "Neptune",
+      "planet2": "Pluto"
+    },
+    {
+      "applying": false,
+      "aspect": "Square",
+      "orb": 1.3251020098771278,
+      "planet1": "Pluto",
+      "planet2": "North Node"
+    }
+  ],
+  "coordinates": {
+    "latitude": 40.7127281,
+    "longitude": -74.0060152
+  },
+  "houses": {
+    "ascendant": {
+      "longitude": 20.664869062526854,
+      "position": 20.664869062526854,
+      "sign": "Aries"
+    },
+    "descendant": {
+      "longitude": 200.66486906252686,
+      "position": 20.66486906252686,
+      "sign": "Libra"
+    },
+    "house_system": "whole_sign",
+    "houses": [
+      {
+        "house": 1,
+        "longitude": 0.0,
+        "position": 0.0,
+        "sign": "Aries"
+      },
+      {
+        "house": 2,
+        "longitude": 30.0,
+        "position": 0.0,
+        "sign": "Taurus"
+      },
+      {
+        "house": 3,
+        "longitude": 60.0,
+        "position": 0.0,
+        "sign": "Gemini"
+      },
+      {
+        "house": 4,
+        "longitude": 90.0,
+        "position": 0.0,
+        "sign": "Cancer"
+      },
+      {
+        "house": 5,
+        "longitude": 120.0,
+        "position": 0.0,
+        "sign": "Leo"
+      },
+      {
+        "house": 6,
+        "longitude": 150.0,
+        "position": 0.0,
+        "sign": "Virgo"
+      },
+      {
+        "house": 7,
+        "longitude": 180.0,
+        "position": 0.0,
+        "sign": "Libra"
+      },
+      {
+        "house": 8,
+        "longitude": 210.0,
+        "position": 0.0,
+        "sign": "Scorpio"
+      },
+      {
+        "house": 9,
+        "longitude": 240.0,
+        "position": 0.0,
+        "sign": "Sagittarius"
+      },
+      {
+        "house": 10,
+        "longitude": 270.0,
+        "position": 0.0,
+        "sign": "Capricorn"
+      },
+      {
+        "house": 11,
+        "longitude": 300.0,
+        "position": 0.0,
+        "sign": "Aquarius"
+      },
+      {
+        "house": 12,
+        "longitude": 330.0,
+        "position": 0.0,
+        "sign": "Pisces"
+      }
+    ],
+    "imum_coeli": {
+      "longitude": 101.10768022067276,
+      "position": 11.107680220672762,
+      "sign": "Cancer"
+    },
+    "midheaven": {
+      "longitude": 281.10768022067276,
+      "position": 11.107680220672762,
+      "sign": "Capricorn"
+    }
+  },
+  "input": {
+    "date": "1990-01-01",
+    "house_system": "whole_sign",
+    "location": "New York, USA",
+    "time": "12:00",
+    "timezone": "America/New_York"
+  },
+  "planets": [
+    {
+      "distance": 0.9833250264923047,
+      "id": 0,
+      "latitude": 2.0062390251214924e-05,
+      "longitude": 281.0266448163021,
+      "name": "Sun",
+      "position": 11.02664481630211,
+      "retrograde": false,
+      "sign": "Capricorn",
+      "speed": 1.0194603009257137
+    },
+    {
+      "distance": 0.002531030511568429,
+      "id": 1,
+      "latitude": 1.7138624817745831,
+      "longitude": 336.07828534095154,
+      "name": "Moon",
+      "position": 6.078285340951538,
+      "retrograde": false,
+      "sign": "Pisces",
+      "speed": 13.51168357052273
+    },
+    {
+      "distance": 0.7665912273237507,
+      "id": 2,
+      "latitude": 0.6958221074639086,
+      "longitude": 295.60713402368356,
+      "name": "Mercury",
+      "position": 25.607134023683557,
+      "retrograde": true,
+      "sign": "Capricorn",
+      "speed": -0.3358628783472712
+    },
+    {
+      "distance": 0.3046016218463865,
+      "id": 3,
+      "latitude": 1.9525247281247347,
+      "longitude": 306.1937769488276,
+      "name": "Venus",
+      "position": 6.193776948827576,
+      "retrograde": true,
+      "sign": "Aquarius",
+      "speed": -0.1390526372342865
+    },
+    {
+      "distance": 2.306399063065535,
+      "id": 4,
+      "latitude": -0.0352204217807123,
+      "longitude": 250.14671456889056,
+      "name": "Mars",
+      "position": 10.146714568890559,
+      "retrograde": false,
+      "sign": "Sagittarius",
+      "speed": 0.7038703361628688
+    },
+    {
+      "distance": 4.171938023694304,
+      "id": 5,
+      "latitude": -0.11645362563402224,
+      "longitude": 95.12072072739113,
+      "name": "Jupiter",
+      "position": 5.120720727391131,
+      "retrograde": true,
+      "sign": "Cancer",
+      "speed": -0.13436489555196812
+    },
+    {
+      "distance": 11.006846551160443,
+      "id": 6,
+      "latitude": 0.2930470040707644,
+      "longitude": 285.68216394680786,
+      "name": "Saturn",
+      "position": 15.682163946807862,
+      "retrograde": false,
+      "sign": "Capricorn",
+      "speed": 0.11828976200249136
+    },
+    {
+      "distance": 20.359169023422577,
+      "id": 7,
+      "latitude": -0.270139911298294,
+      "longitude": 275.79797517402864,
+      "name": "Uranus",
+      "position": 5.797975174028636,
+      "retrograde": false,
+      "sign": "Capricorn",
+      "speed": 0.059990604409726346
+    },
+    {
+      "distance": 31.19349437112108,
+      "id": 8,
+      "latitude": 0.8473322422628713,
+      "longitude": 282.04601714093025,
+      "name": "Neptune",
+      "position": 12.046017140930246,
+      "retrograde": false,
+      "sign": "Capricorn",
+      "speed": 0.037903727002270425
+    },
+    {
+      "distance": 30.203700168236352,
+      "id": 9,
+      "latitude": 15.28570366812667,
+      "longitude": 227.09884824063812,
+      "name": "Pluto",
+      "position": 17.09884824063812,
+      "retrograde": false,
+      "sign": "Scorpio",
+      "speed": 0.027224554008163402
+    },
+    {
+      "distance": 0.00256955528979999,
+      "id": 10,
+      "latitude": 0.0,
+      "longitude": 318.42395025051525,
+      "name": "North Node",
+      "position": 18.423950250515247,
+      "retrograde": true,
+      "sign": "Aquarius",
+      "speed": -0.0529618133117423
+    }
+  ],
+  "utc_time": {
+    "day": 1,
+    "hour": 17,
+    "julian_day": 2447893.2083333335,
+    "minute": 0,
+    "month": 1,
+    "second": 0,
+    "year": 1990
+  }
+}
