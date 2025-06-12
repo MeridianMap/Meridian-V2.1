@@ -6,7 +6,7 @@ import "./astromap.css";
 const planetColors = {
   "Sun": "gold", "Moon": "silver", "Mercury": "purple", "Venus": "green",
   "Mars": "red", "Jupiter": "orange", "Saturn": "gray", "Uranus": "teal",
-  "Neptune": "blue", "Pluto": "black", "North Node": "brown"
+  "Neptune": "blue", "Pluto": "black", "North Node": "brown", "South Node": "darkred"
 };
 
 // Axis abbreviations
@@ -18,7 +18,6 @@ const axisLabels = {
 };
 
 const AstroMap = ({ data, paransData }) => {
-  const [showJson, setShowJson] = React.useState(false);
   // Merge features from astrocartography and parans (if present)
   const mergedFeatures = React.useMemo(() => {
     if (!data?.features?.length && !paransData?.features?.length) return [];
@@ -28,19 +27,10 @@ const AstroMap = ({ data, paransData }) => {
   }, [data, paransData]);
   if (!mergedFeatures.length) return <div>Loading astrocartography data…</div>;
 
-  // Wrap raw [lon, lat] coords into Leaflet [lat, lon+offset], clamp lon to [-180, 180]
-  const wrapCoords = (coords, offset) =>
-    coords.map(([lon, lat]) => {
-      let wrappedLon = lon + offset;
-      // Clamp longitude to [-180, 180]
-      if (wrappedLon > 180) wrappedLon -= 360;
-      if (wrappedLon < -180) wrappedLon += 360;
-      return [lat, wrappedLon];
-    });
-
   return (
     <div className="astromap-wrapper">
-      {/* Accordion button for JSON output */}
+      {/* Accordion button for JSON output - removed, now handled in App.jsx */}
+      {/*
       <div style={{ margin: '12px 0' }}>
         <button
           onClick={() => setShowJson((v) => !v)}
@@ -48,7 +38,8 @@ const AstroMap = ({ data, paransData }) => {
             padding: '6px 14px',
             borderRadius: 4,
             border: '1px solid #aaa',
-            background: '#f7f7f7',
+            background: '#222', // Changed to dark background
+            color: '#fff', // Ensure text is white
             fontWeight: 600,
             cursor: 'pointer',
             marginBottom: 6,
@@ -73,10 +64,12 @@ const AstroMap = ({ data, paransData }) => {
           </pre>
         )}
       </div>
+      */}
       <MapContainer
         className="leaflet-container"
         center={[0, 0]}
         zoom={2}
+        minZoom={2}
         scrollWheelZoom={true}
         worldCopyJump={true}
       >
@@ -87,7 +80,31 @@ const AstroMap = ({ data, paransData }) => {
         />
 
         {mergedFeatures.map((feat, idx) => {
-          if (feat.geometry.type === "LineString" && feat.properties.type === "paran") {
+          // Debug: print MC/IC line longitudes for North/South Node
+          if ((feat.properties.planet === "North Node" || feat.properties.planet === "South Node") && (feat.properties.line_type === "MC" || feat.properties.line_type === "IC")) {
+            const coords = feat.geometry.coordinates;
+            const lon = coords[0][0];
+            // Enhanced debug: print all coordinates and properties
+            console.log(`DEBUG: ${feat.properties.planet} ${feat.properties.line_type} properties:`, feat.properties);
+            console.log(`DEBUG: ${feat.properties.planet} ${feat.properties.line_type} coordinates:`, coords);
+            console.log(`DEBUG: ${feat.properties.planet} ${feat.properties.line_type} first longitude:`, lon);
+          }
+          if (feat.geometry.type === "LineString" && (feat.properties.line_type === "MC" || feat.properties.line_type === "IC")) {
+            // Render MC/IC vertical lines
+            const coords = feat.geometry.coordinates;
+            const planet = feat.properties.planet;
+            const label = `${planet} ${feat.properties.line_type}`;
+            return [0, 360, -360].map(offset => (
+              <Polyline
+                key={`mcic-${idx}-${offset}`}
+                positions={coords.map(([lon, lat]) => [lat, lon + offset])}
+                pathOptions={{ color: planetColors[planet] || "magenta", weight: 3 }}
+                smoothFactor={1}
+              >
+                <Tooltip sticky>{label}</Tooltip>
+              </Polyline>
+            ));
+          } else if (feat.geometry.type === "LineString" && feat.properties.type === "paran") {
             // Render horizontal paran lines
             const rawCoords = feat.geometry.coordinates;
             let planet = feat.properties.planet;
@@ -108,35 +125,107 @@ const AstroMap = ({ data, paransData }) => {
                 <Tooltip sticky>{label}</Tooltip>
               </Polyline>
             ));
-          } else if (feat.geometry.type === "LineString") {
-            const rawCoords = feat.geometry.coordinates;
-            let planet = feat.properties.planet;
-            const axis = feat.properties.line_type;
-            if (typeof planet === 'string') planet = planet.trim();
+          } else if (
+            (feat.geometry.type === "LineString" || feat.geometry.type === "MultiLineString") &&
+            feat.properties.line_type === "HORIZON"
+          ) {
+            // Handle both LineString and MultiLineString for horizon lines
+            const segments = feat.geometry.type === "LineString"
+              ? [feat.geometry.coordinates]
+              : feat.geometry.coordinates;
+            const planet = feat.properties.planet;
+            // Move color/weight inside map to avoid scope issues
+            const segLabels = feat.properties.segments || [];
+            // Render each segment, coloring and labeling by AC/DC
+            return segments.map((coords, segIdx) => {
+              if (!coords || coords.length < 2) return null;
+              let label = planet;
+              if (segLabels.length === 2) {
+                const segLabel = segLabels[segIdx]?.label;
+                if (segLabel) label = `${planet} ${segLabel}`;
+              }
+              // Use pathOptions for Polyline styling (react-leaflet v3+)
+              return (
+                <Polyline
+                  key={`horizon-${idx}-${segIdx}`}
+                  positions={coords.map(([lon, lat]) => [lat, lon])}
+                  pathOptions={{ color: planetColors[planet] || "magenta", weight: 3 }}
+                  smoothFactor={1}
+                >
+                  <Tooltip sticky>{label}</Tooltip>
+                </Polyline>
+              );
+            });
+          } else if (
+            (feat.geometry.type === "LineString" || feat.geometry.type === "MultiLineString") &&
+            feat.properties.line_type === "ASPECT"
+          ) {
+            // Handle both LineString and MultiLineString for aspect lines
+            const segments = feat.geometry.type === "LineString"
+              ? [feat.geometry.coordinates]
+              : feat.geometry.coordinates;
+            const planet = feat.properties.planet;
             const color = planetColors[planet] || "magenta";
-            const weight = 3;
-            const dashArray = null;
-            const label = `${planet} ${axisLabels[axis] || axis}`;
-            // Draw each line with wraps at ±360° longitude
-            return [0, 360, -360].map((offset) => (
+            const label = feat.properties.label;
+            return segments.map((coords, segIdx) => (
               <Polyline
-                key={`${idx}-${offset}`}
-                positions={rawCoords.map(([lon, lat]) => [lat, lon + offset])}
-                color={color}
-                weight={weight}
-                dashArray={dashArray}
+                key={`aspect-${idx}-${segIdx}`}
+                positions={coords.map(([lon, lat]) => [lat, lon])}
+                pathOptions={{ color, weight: 2, dashArray: "4 4" }}
                 smoothFactor={1}
               >
                 <Tooltip sticky>{label}</Tooltip>
               </Polyline>
             ));
+          } else if (feat.geometry.type === "LineString") {
+            const rawCoords = feat.geometry.coordinates;
+            let planet = feat.properties.planet;
+            // Remove color/weight from this block to avoid undefined errors
+            const dashArray = null;
+            // --- PATCH: Split AC/DC segments visually ---
+            const acdc = feat.properties.ac_dc_indices;
+            let ac_end = acdc ? acdc.ac_end : null;
+            let dc_start = acdc ? acdc.dc_start : null;
+            let ac_coords = rawCoords;
+            let dc_coords = [];
+            if (ac_end !== null && dc_start !== null) {
+              ac_coords = rawCoords.slice(0, ac_end + 1);
+              dc_coords = rawCoords.slice(dc_start);
+            }
+            const acLabel = `${planet} AC`;
+            const dcLabel = `${planet} DC`;
+            // Draw each segment with wraps at ±360° longitude
+            return [0, 360, -360].flatMap((offset) => [
+              ac_coords.length > 1 && (
+                <Polyline
+                  key={`ac-${idx}-${offset}`}
+                  positions={ac_coords.map(([lon, lat]) => [lat, lon + offset])}
+                  pathOptions={{ color: planetColors[planet] || "magenta", weight: 3 }}
+                  dashArray={dashArray}
+                  smoothFactor={1}
+                >
+                  <Tooltip sticky>{acLabel}</Tooltip>
+                </Polyline>
+              ),
+              dc_coords.length > 1 && (
+                <Polyline
+                  key={`dc-${idx}-${offset}`}
+                  positions={dc_coords.map(([lon, lat]) => [lat, lon + offset])}
+                  pathOptions={{ color: planetColors[planet] || "magenta", weight: 3 }}
+                  dashArray={dashArray}
+                  smoothFactor={1}
+                >
+                  <Tooltip sticky>{dcLabel}</Tooltip>
+                </Polyline>
+              )
+            ].filter(Boolean));
           } else if (feat.geometry.type === "Point" && feat.properties.type === "fixed_star") {
             // Render fixed star as a circle with 50 mile radius (approx 80.47 km)
             const [lon, lat] = feat.geometry.coordinates;
-            return (
+            return [-360, 0, 360].map(offset => (
               <Circle
-                key={`star-${idx}`}
-                center={[lat, lon]}
+                key={`star-${idx}-${offset}`}
+                center={[lat, lon + offset]}
                 radius={80467} // 50 miles in meters
                 pathOptions={{ color: "#e6b800", fillColor: "#fffbe6", fillOpacity: 0.5 }}
               >
@@ -147,7 +236,7 @@ const AstroMap = ({ data, paransData }) => {
                   )}
                 </Tooltip>
               </Circle>
-            );
+            ));
           }
           return null;
         })}

@@ -8,6 +8,14 @@ from flask_cors import CORS
 import json
 import sys
 import os
+import swisseph as swe
+
+# Unset SE_EPHE_PATH to avoid conflicts
+if "SE_EPHE_PATH" in os.environ:
+    del os.environ["SE_EPHE_PATH"]
+
+# Force ephemeris path to backend/ephe
+swe.set_ephe_path(os.path.join(os.path.dirname(__file__), "ephe"))
 
 # Add the parent directory to the path so we can import the modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -79,8 +87,8 @@ def api_interpret():
             return jsonify({"error": "Missing coordinates in chart data"}), 400
 
         # Generate full astrocartography lines
-        astro_lines_result = calculate_astrocartography_lines(chart_data)
-        all_lines = astro_lines_result.get("lines", [])
+        astro_lines_result = calculate_astrocartography_lines_geojson(chart_data)
+        all_lines = astro_lines_result.get("features", [])
 
         # Filter for lines near the birth location
         filtered_lines = filter_lines_near_location(all_lines, lat, lon, radius_miles=600)
@@ -101,11 +109,9 @@ def api_interpret():
 def api_astrocartography():
     try:
         data = request.get_json()
-
         # Validate essential inputs (optional but safe)
         if not data.get("birth_date") or not data.get("birth_time") or not data.get("coordinates"):
             return jsonify({"error": "Missing birth_date, birth_time, or coordinates."}), 400
-
         results = calculate_astrocartography_lines_geojson(chart_data=data)
         return jsonify(results)
     except Exception as e:

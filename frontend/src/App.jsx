@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import './App.css'
 import AstroMap from './Astromap';
@@ -20,16 +20,29 @@ function App() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [response, setResponse] = useState(null)
   const [error, setError] = useState(null)
-  const [interpretation, setInterpretation] = useState(null)
-  const [loadingInterpretation, setLoadingInterpretation] = useState(false)
   const [astroData, setAstroData] = useState(null)
   const [showJson, setShowJson] = useState(false)
-  const [showAstroLines, setShowAstroLines] = useState(false)
   const [showAstroJson, setShowAstroJson] = useState(false)
-  const [paransData, setParansData] = useState(null);
-  const [showParansJson, setShowParansJson] = useState(false);
-  const [paransLoading, setParansLoading] = useState(false);
-  const [selectedPlanetId, setSelectedPlanetId] = useState(null);
+  const [lineToggles, setLineToggles] = useState({
+    planet: true,
+    aspect: true,
+    fixed_star: true,
+    hermetic_lot: true,
+  });
+
+  // List of all planets and asteroids for individual toggles
+  const allBodies = [
+    "Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "North Node",
+    "South Node", "Chiron", "Ceres", "Pallas", "Juno", "Vesta", "Black Moon Lilith", "Pholus"
+  ];
+
+  // State for individual planet/asteroid toggles (default all on)
+  const [bodyToggles, setBodyToggles] = React.useState(
+    Object.fromEntries(allBodies.map(name => [name, true]))
+  );
+
+  // Accordion state for planet/asteroid toggles
+  const [showBodyAccordion, setShowBodyAccordion] = React.useState(false);
 
   const dropdownRef = useRef(null)
   useEffect(() => {
@@ -81,85 +94,157 @@ function App() {
     }
   }
 
+  // Progress bar state
+  const [loadingStep, setLoadingStep] = React.useState(null); // null | 'ephemeris' | 'astro' | 'done'
+
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
+    setLoadingStep('ephemeris');
     try {
-      const res = await axios.post('http://localhost:5000/api/calculate', {
+      // 1. Generate chart (ephemeris)
+      const chartResult = await axios.post('http://localhost:5000/api/calculate', {
         ...formData,
         use_extended_planets: true // Always request extended planets
       })
-      setResponse(res.data)
-      setInterpretation(null)
-    } catch {
-      setError('Failed to fetch chart. Please check your input.')
-    }
-  }
-
-  const handleInterpret = async () => {
-    setLoadingInterpretation(true)
-    setError(null)
-    try {
-      const res = await axios.post('http://localhost:5000/api/interpret', response)
-      setInterpretation(res.data.interpretation)
-    } catch {
-      setError('Failed to generate interpretation.')
-    } finally {
-      setLoadingInterpretation(false)
-    }
-  }
-
-  const handleFetchAstro = async () => {
-    try {
-      if (!response?.coordinates?.latitude || !response?.utc_time || !formData.timezone) {
-        return setError("Missing data needed for astrocartography request.")
+      setResponse(chartResult.data);
+      setLoadingStep('astro');
+      // 2. Fetch astrocartography data, using the new chartResult
+      if (chartResult) {
+        await handleFetchAstro(chartResult.data);
       }
-      // Debug: print planets being sent to backend
-      console.log('Planets sent to /api/astrocartography:', response.planets?.map(p => p.name));
+      setLoadingStep('done');
+    } catch (err) {
+      setError("Failed to generate chart or fetch astrocartography data.");
+      setLoadingStep(null);
+    }
+  }
+
+  const handleFetchAstro = async (chartData) => {
+    try {
+      // Use chartData instead of response
       const payload = {
         birth_date: formData.birth_date,
         birth_time: formData.birth_time,
         timezone: formData.timezone,
-        coordinates: { latitude: response.coordinates.latitude, longitude: response.coordinates.longitude },
-        planets: response.planets,
-        utc_time: response.utc_time,
-        lots: response.lots // <-- ensure Hermetic Lots are sent to backend
-      }
-      const res = await axios.post('http://localhost:5000/api/astrocartography', payload)
-      setAstroData(res.data)
+        coordinates: { latitude: chartData.coordinates.latitude, longitude: chartData.coordinates.longitude },
+        planets: chartData.planets,
+        utc_time: chartData.utc_time,
+        lots: chartData.lots
+      };
+      const res = await axios.post('http://localhost:5000/api/astrocartography', payload);
+      setAstroData(res.data);
     } catch {
-      setError("Failed to fetch astrocartography data.")
+      setError("Failed to fetch astrocartography data.");
     }
   }
 
-  // Helper to get valid planet options
-  const validPlanets = response?.planets?.filter(p => [0,1,2,3,4,5,6,7,8,9,15].includes(p.id)) || [];
+  // Filter astroData.features by toggles
+  const filteredAstroData = astroData
+    ? {
+        ...astroData,
+        features: astroData.features.filter(f => {
+          const cat = f.properties?.category;
+          // Category filter
+          if (cat in lineToggles && !lineToggles[cat]) return false;
+          // Planet/asteroid filter (for lines/points with a planet/asteroid name)
+          let body = f.properties?.planet || f.properties?.body || f.properties?.name;
+          // Normalize for Pallas Athena
+          if (body === 'Pallas Athena') body = 'Pallas';
+          // In the filter logic, normalize Black Moon Lilith variants
+          if (body === 'Lilith' || body === 'BML' || body === 'Black Moon') body = 'Black Moon Lilith';
+          // In the filter logic, normalize South Node and Pholus variants
+          if (body === 'South Node' || body === 'SN' || body === 'Ketu') body = 'South Node';
+          if (body === 'Pholus') body = 'Pholus';
+          if (body && bodyToggles[body] === false) return false;
+          return true;
+        }),
+      }
+    : null;
 
-  const handleCalculateParans = async () => {
-    if (!response?.utc_time?.julian_day || !response?.coordinates?.latitude || !response?.coordinates?.longitude || !selectedPlanetId) {
-      setError('Missing data for parans calculation.');
-      return;
-    }
-    setParansLoading(true);
-    setError(null);
-    try {
-      const res = await axios.post('http://localhost:5000/api/parans', {
-        jd_ut: response.utc_time.julian_day,
-        lat: response.coordinates.latitude,
-        lon: response.coordinates.longitude,
-        planet_id: selectedPlanetId
-      });
-      setParansData(res.data);
-    } catch {
-      setError('Failed to fetch parans data.');
-    } finally {
-      setParansLoading(false);
-    }
+  // Removed Parans-related state and helpers as Parans UI is removed
+
+  // User-friendly labels for line categories
+  const lineLabels = {
+    planet: 'Main Planets',
+    aspect: 'Aspects',
+    fixed_star: 'Fixed Stars',
+    hermetic_lot: 'Hermetic Lots',
   };
 
   return (
     <div className="app">
-      <h1>Meridian V1</h1>
+      {/* JSON buttons at the top, only show after chart is generated */}
+      {(response || astroData) && (
+        <div style={{ display: 'flex', gap: 16, margin: '2rem 0 1.5rem 0', justifyContent: 'center' }}>
+          <button
+            onClick={() => setShowJson(prev => !prev)}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: 4,
+              border: '1px solid #aaa',
+              background: '#222',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: 18,
+              cursor: 'pointer',
+              boxShadow: 'none',
+              transition: 'background 0.2s, color 0.2s',
+            }}
+          >
+            {showJson ? 'Hide' : 'Show'} Natal Chart JSON
+          </button>
+          <button
+            onClick={() => setShowAstroJson(v => !v)}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: 4,
+              border: '1px solid #aaa',
+              background: '#222',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: 18,
+              cursor: 'pointer',
+              boxShadow: 'none',
+              transition: 'background 0.2s, color 0.2s',
+            }}
+          >
+            {showAstroJson ? 'Hide' : 'Show'} Astrocartography JSON Output
+          </button>
+        </div>
+      )}
+      {/* JSON output blocks */}
+      {showJson && response && (
+        <pre style={{
+          maxHeight: 400,
+          overflow: 'auto',
+          background: '#222',
+          color: '#fff',
+          padding: 12,
+          borderRadius: 4,
+          fontSize: 13,
+          margin: '0 auto 1rem auto',
+          width: '90%',
+        }}>
+          {JSON.stringify(response, null, 2)}
+        </pre>
+      )}
+      {showAstroJson && astroData && (
+        <pre style={{
+          maxHeight: 400,
+          overflow: 'auto',
+          background: '#222',
+          color: '#fff',
+          padding: 12,
+          borderRadius: 4,
+          fontSize: 13,
+          margin: '0 auto 1rem auto',
+          width: '90%',
+        }}>
+          {JSON.stringify(astroData, null, 2)}
+        </pre>
+      )}
+      <h1>Meridian V2</h1>
       <form onSubmit={handleSubmit}>
         <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
         <input type="date" name="birth_date" value={formData.birth_date} onChange={handleChange} required />
@@ -202,77 +287,116 @@ function App() {
 
         <button type="submit" style={{ marginTop: '1rem' }}>Generate Chart</button>
       </form>
-
-      {response && (
-        <>
-          <button type="button" onClick={handleInterpret} style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#333', color: '#fff', border: 'none' }}>
-            {loadingInterpretation ? 'Interpreting...' : 'Interpret Chart'}
-          </button>
-          <button type="button" onClick={handleFetchAstro} style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#444', color: '#fff', border: 'none' }}>
-            Fetch Astrocartography Data
-          </button>
-        </>
+      {loadingStep && (
+        <div style={{ width: 340, maxWidth: '90%', margin: '12px auto', textAlign: 'center' }}>
+          <div style={{ height: 8, background: '#333', borderRadius: 4, overflow: 'hidden', marginBottom: 6 }}>
+            <div style={{
+              width: loadingStep === 'ephemeris' ? '33%' : loadingStep === 'astro' ? '66%' : '100%',
+              height: '100%',
+              background: '#4caf50',
+              transition: 'width 0.4s',
+            }} />
+          </div>
+          <span style={{ color: '#bbb', fontSize: 14 }}>
+            {loadingStep === 'ephemeris' && 'Calculating ephemeris...'}
+            {loadingStep === 'astro' && 'Fetching astrocartography...'}
+            {loadingStep === 'done' && 'Done!'}
+          </span>
+        </div>
       )}
-
       {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
 
-      <pre className="json-preview">{JSON.stringify(formData, null, 2)}</pre>
-
-      {response && (
-        <div className="json-preview">
-          <button onClick={() => setShowJson(prev => !prev)} style={{ marginBottom: '0.5rem', padding: '0.5rem 1rem', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            {showJson ? 'Hide Raw Chart JSON' : 'Show Raw Chart JSON'}
-          </button>
-          {showJson && <pre>{JSON.stringify(response, null, 2)}</pre>}
-        </div>
-      )}
-
-      {interpretation && (
-        <div className="interpretation-box">
-          <h3>Interpretation</h3>
-          <p>{interpretation}</p>
-        </div>
-      )}
-
-      {/* Parans calculation UI */}
-      {response && (
-        <div style={{ marginTop: '2rem' }}>
-          <h3>Calculate Parans</h3>
-          <div style={{ marginBottom: 8 }}>
-            <label>Select planet:&nbsp;</label>
-            <select value={selectedPlanetId || ''} onChange={e => setSelectedPlanetId(Number(e.target.value))}>
-              <option value="">-- Select --</option>
-              {validPlanets.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <button onClick={handleCalculateParans} disabled={!selectedPlanetId || paransLoading} style={{ marginLeft: 12, padding: '0.5rem 1rem', backgroundColor: '#5a2', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              {paransLoading ? 'Calculating...' : 'Calculate Parans'}
-            </button>
-            <button onClick={() => setShowParansJson(prev => !prev)} style={{ marginLeft: 12, padding: '0.5rem 1rem', backgroundColor: '#222', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              {showParansJson ? 'Hide Parans JSON' : 'Show Parans JSON'}
-            </button>
-          </div>
-          {showParansJson && paransData && (
-            <pre className="json-preview" style={{ marginTop: '0.5rem' }}>{JSON.stringify(paransData, null, 2)}</pre>
-          )}
-        </div>
-      )}
+      {/* Minimal, discrete birth info verification */}
+      <pre className="json-preview" style={{
+        width: 340,
+        maxWidth: '90%',
+        margin: '16px auto 8px auto',
+        display: 'block',
+        textAlign: 'left',
+        background: 'rgba(34,34,34,0.7)',
+        color: '#bbb',
+        fontSize: 13,
+        borderRadius: 6,
+        boxShadow: 'none',
+        padding: '8px 12px',
+        border: '1px solid #333',
+      }}>{JSON.stringify(formData, null, 2)}</pre>
 
       {/* Astrocartography visualization */}
       {astroData && (
-        <div style={{ marginTop: '2rem' }}>
-          <button onClick={() => setShowAstroLines(prev => !prev)} style={{ marginBottom: '0.5rem', padding: '0.5rem 1rem', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            {showAstroLines ? 'Hide Astrocartography Lines' : 'Show Astrocartography Lines'}
-          </button>
-          <button onClick={() => setShowAstroJson(prev => !prev)} style={{ marginLeft: '1rem', marginBottom: '0.5rem', padding: '0.5rem 1rem', backgroundColor: '#222', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            {showAstroJson ? 'Hide Astrocartography JSON' : 'Show Astrocartography JSON'}
-          </button>
-          {showAstroJson && (
-            <pre className="json-preview" style={{ marginTop: '0.5rem' }}>{JSON.stringify(astroData, null, 2)}</pre>
-          )}
-          {showAstroLines && <AstroMap data={astroData} paransData={paransData} />}
-        </div>
+        <>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', margin: '0 0 1.5rem 0' }}>
+            {Object.entries(lineToggles).map(([key, value]) => (
+              <label key={key} style={{ color: '#fff', fontWeight: 500, fontSize: 16 }}>
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={() => setLineToggles(toggles => ({ ...toggles, [key]: !toggles[key] }))}
+                  style={{ marginRight: 6 }}
+                />
+                {lineLabels[key]}
+              </label>
+            ))}
+          </div>
+          {/* Accordion for planet/asteroid toggles */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 16 }}>
+            <button
+              onClick={() => setShowBodyAccordion(v => !v)}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: 4,
+                border: '1px solid #aaa',
+                background: '#222',
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: 16,
+                cursor: 'pointer',
+                marginBottom: 8,
+                boxShadow: 'none',
+                transition: 'background 0.2s, color 0.2s',
+              }}
+            >
+              {showBodyAccordion ? 'Hide' : 'Show'} Planets & Asteroids
+            </button>
+            {showBodyAccordion && (
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center',
+                background: 'rgba(34,34,34,0.85)', borderRadius: 8, padding: 16, border: '1px solid #333',
+                maxWidth: 700
+              }}>
+                {/* Check/Uncheck All */}
+                <label style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 120 }}>
+                  <input
+                    type="checkbox"
+                    checked={Object.values(bodyToggles).every(Boolean)}
+                    indeterminate={Object.values(bodyToggles).some(v => v) && !Object.values(bodyToggles).every(v => v)}
+                    onChange={() => {
+                      const allOn = Object.values(bodyToggles).every(Boolean);
+                      setBodyToggles(Object.fromEntries(allBodies.map(name => [name, !allOn])));
+                    }}
+                    style={{ marginRight: 6 }}
+                  />
+                  Check/Uncheck All
+                </label>
+                {allBodies.map(name => (
+                  <label key={name} style={{ color: '#fff', fontWeight: 500, fontSize: 15, minWidth: 120 }}>
+                    <input
+                      type="checkbox"
+                      checked={bodyToggles[name]}
+                      onChange={() => setBodyToggles(toggles => ({ ...toggles, [name]: !toggles[name] }))}
+                      style={{ marginRight: 6 }}
+                    />
+                    {name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Map and JSON buttons at the bottom */}
+          <div className="json-preview" style={{ width: 1000, maxWidth: '100%', margin: '3rem auto 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid #222', borderRadius: 12, background: 'rgba(34,34,34,0.7)' }}>
+            <AstroMap data={filteredAstroData} />
+          </div>
+        </>
       )}
     </div>
   )

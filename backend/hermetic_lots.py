@@ -26,13 +26,13 @@ def is_day_chart(sun_lon, asc_lon):
 
 # Expanded Hermetic Lot formulas (day/night)
 LOT_FORMULAS = {
-    "Fortune": lambda asc, sun, moon, is_day: normalize_deg(asc + (moon - sun) if is_day else asc + (sun - moon)),
-    "Spirit": lambda asc, sun, moon, is_day: normalize_deg(asc + (sun - moon) if is_day else asc + (moon - sun)),
-    "Eros": lambda asc, sun, moon, is_day: normalize_deg(asc + (venus - sun) if is_day else asc + (sun - venus)),
-    "Necessity": lambda asc, sun, moon, is_day: normalize_deg(asc + (saturn - sun) if is_day else asc + (sun - saturn)),
-    "Victory": lambda asc, sun, moon, is_day: normalize_deg(asc + (jupiter - sun) if is_day else asc + (sun - jupiter)),
-    "Courage": lambda asc, sun, moon, is_day: normalize_deg(asc + (mars - sun) if is_day else asc + (sun - mars)),
-    "Nemesis": lambda asc, sun, moon, is_day: normalize_deg(asc + (mercury - sun) if is_day else asc + (sun - mercury)),
+    "Fortune": lambda asc, sun, moon, is_day, **kwargs: normalize_deg(asc + (moon - sun) if is_day else asc + (sun - moon)),
+    "Spirit": lambda asc, sun, moon, is_day, **kwargs: normalize_deg(asc + (sun - moon) if is_day else asc + (moon - sun)),
+    "Eros": lambda asc, sun, moon, is_day, venus, **kwargs: normalize_deg(asc + (venus - sun) if is_day else asc + (sun - venus)),
+    "Necessity": lambda asc, sun, moon, is_day, saturn, **kwargs: normalize_deg(asc + (saturn - sun) if is_day else asc + (sun - saturn)),
+    "Victory": lambda asc, sun, moon, is_day, jupiter, **kwargs: normalize_deg(asc + (jupiter - sun) if is_day else asc + (sun - jupiter)),
+    "Courage": lambda asc, sun, moon, is_day, mars, **kwargs: normalize_deg(asc + (mars - sun) if is_day else asc + (sun - mars)),
+    "Nemesis": lambda asc, sun, moon, is_day, mercury, **kwargs: normalize_deg(asc + (mercury - sun) if is_day else asc + (sun - mercury)),
 }
 
 def calculate_hermetic_lots(chart_planets, ascendant):
@@ -65,23 +65,21 @@ def calculate_hermetic_lots(chart_planets, ascendant):
     is_day = is_day_chart(sun_lon, asc_lon)
     lots = []
     for lot_name, formula in LOT_FORMULAS.items():
-        # Pass all needed arguments to the formula
-        if lot_name == "Fortune":
+        args = dict(
+            asc=asc_lon,
+            sun=sun_lon,
+            moon=moon_lon,
+            is_day=is_day,
+            mercury=mercury_lon,
+            venus=venus_lon,
+            mars=mars_lon,
+            jupiter=jupiter_lon,
+            saturn=saturn_lon,
+        )
+        if lot_name in ("Fortune", "Spirit"):
             lot_lon = formula(asc_lon, sun_lon, moon_lon, is_day)
-        elif lot_name == "Spirit":
-            lot_lon = formula(asc_lon, sun_lon, moon_lon, is_day)
-        elif lot_name == "Eros":
-            lot_lon = normalize_deg(asc_lon + (venus_lon - sun_lon) if is_day else asc_lon + (sun_lon - venus_lon))
-        elif lot_name == "Necessity":
-            lot_lon = normalize_deg(asc_lon + (saturn_lon - sun_lon) if is_day else asc_lon + (sun_lon - saturn_lon))
-        elif lot_name == "Victory":
-            lot_lon = normalize_deg(asc_lon + (jupiter_lon - sun_lon) if is_day else asc_lon + (sun_lon - jupiter_lon))
-        elif lot_name == "Courage":
-            lot_lon = normalize_deg(asc_lon + (mars_lon - sun_lon) if is_day else asc_lon + (sun_lon - mars_lon))
-        elif lot_name == "Nemesis":
-            lot_lon = normalize_deg(asc_lon + (mercury_lon - sun_lon) if is_day else asc_lon + (sun_lon - mercury_lon))
         else:
-            continue
+            lot_lon = formula(**args)
         sign, pos = lot_sign_and_position(lot_lon)
         lots.append({
             "name": f"Lot of {lot_name}",

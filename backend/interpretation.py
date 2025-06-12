@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Create OpenAI client instance
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Set OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def generate_interpretation(chart_data):
     prompt = (
@@ -22,7 +22,7 @@ def generate_interpretation(chart_data):
     )
 
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a skilled astrocartographer and interpret planetary line influences with precision."},
@@ -31,6 +31,6 @@ def generate_interpretation(chart_data):
             max_tokens=600,
             temperature=0.8
         )
-        return response.choices[0].message.content.strip()
+        return response.choices[0].message['content'].strip()
     except Exception as e:
         return f"Error generating interpretation: {str(e)}"

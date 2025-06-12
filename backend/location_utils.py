@@ -1,5 +1,6 @@
 import pytz
 from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 from timezonefinder import TimezoneFinder
 
 def detect_timezone_from_coordinates(latitude, longitude):
@@ -79,3 +80,41 @@ def get_location_suggestions(query, limit=5):
     except Exception as e:
         print(f"Error getting location suggestions: {e}")
         return []
+
+def get_coordinates(city, state="", country=""):
+    """
+    Convert structured location information to latitude and longitude coordinates.
+    
+    Args:
+        city (str): City name
+        state (str, optional): State/province/region name
+        country (str, optional): Country name
+        
+    Returns:
+        tuple: (latitude, longitude) or None if geocoding fails
+    """
+    try:
+        geolocator = Nominatim(user_agent="astro-app", timeout=10)
+        query_parts = []
+        if city:
+            query_parts.append(city)
+        if state:
+            query_parts.append(state)
+        if country:
+            query_parts.append(country)
+        if len(query_parts) == 1:
+            location_data = geolocator.geocode(query_parts[0], exactly_one=False, timeout=10)
+            if location_data and len(location_data) > 0:
+                return (location_data[0].latitude, location_data[0].longitude)
+        else:
+            query = ", ".join(query_parts)
+            location_data = geolocator.geocode(query, timeout=10)
+            if location_data:
+                return (location_data.latitude, location_data.longitude)
+        return None
+    except (GeocoderTimedOut, GeocoderServiceError) as e:
+        print(f"Geocoding error (timeout/service): {e}")
+        return None
+    except Exception as e:
+        print(f"General geocoding error: {e}")
+        return None

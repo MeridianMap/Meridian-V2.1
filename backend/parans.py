@@ -56,7 +56,7 @@ def calculate_parans(jd_ut: float, lat: float, lon: float, planet_id: int, sweph
     """
     import swisseph as swe
     print(f"swisseph version: {getattr(swe, '__version__', 'unknown')}")
-    print(f"swe.rise_trans signature: {getattr(swe.rise_trans, '__doc__', 'no docstring available')}")
+    # print(f"swe.rise_trans signature: {getattr(swe.rise_trans, '__doc__', 'no docstring available')}")
     if sweph_path:
         swe.set_ephe_path(sweph_path)
     results = []

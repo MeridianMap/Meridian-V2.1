@@ -3,239 +3,711 @@
     {
       "applying": false,
       "aspect": "Sextile",
-      "orb": 4.948359475350571,
+      "orb": 4.948396409417626,
       "planet1": "Sun",
       "planet2": "Moon"
     },
     {
       "applying": true,
       "aspect": "Semi-sextile",
-      "orb": 4.832867867474533,
+      "orb": 4.832745359228397,
       "planet1": "Sun",
       "planet2": "Venus"
     },
     {
       "applying": false,
       "aspect": "Semi-sextile",
-      "orb": 0.8799302474115507,
+      "orb": 0.8799368587071683,
       "planet1": "Sun",
       "planet2": "Mars"
     },
     {
       "applying": true,
       "aspect": "Opposition",
-      "orb": 5.905924088910979,
+      "orb": 5.905860994853072,
       "planet1": "Sun",
       "planet2": "Jupiter"
     },
     {
       "applying": false,
       "aspect": "Conjunction",
-      "orb": 4.655519130505752,
+      "orb": 4.655489742659995,
       "planet1": "Sun",
       "planet2": "Saturn"
     },
     {
       "applying": false,
       "aspect": "Conjunction",
-      "orb": 5.2286696422734735,
+      "orb": 5.22870908419543,
       "planet1": "Sun",
       "planet2": "Uranus"
     },
     {
       "applying": false,
       "aspect": "Conjunction",
-      "orb": 1.0193723246281365,
+      "orb": 1.0193535647525778,
       "planet1": "Sun",
       "planet2": "Neptune"
     },
     {
       "applying": true,
+      "aspect": "Sextile",
+      "orb": 3.0218641792070002,
+      "planet1": "Sun",
+      "planet2": "Juno"
+    },
+    {
+      "applying": true,
+      "aspect": "Opposition",
+      "orb": 2.772344104431994,
+      "planet1": "Sun",
+      "planet2": "Chiron"
+    },
+    {
+      "applying": false,
+      "aspect": "Sextile",
+      "orb": 4.539326564500698,
+      "planet1": "Sun",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": true,
       "aspect": "Semi-square",
-      "orb": 4.5288486827320185,
+      "orb": 4.528901683303502,
       "planet1": "Moon",
       "planet2": "Mercury"
     },
     {
       "applying": true,
       "aspect": "Semi-sextile",
-      "orb": 0.11549160787603796,
+      "orb": 0.1156510501892285,
       "planet1": "Moon",
       "planet2": "Venus"
     },
     {
       "applying": true,
       "aspect": "Square",
-      "orb": 4.068429227939021,
+      "orb": 4.0684595507104575,
       "planet1": "Moon",
       "planet2": "Mars"
     },
     {
       "applying": true,
       "aspect": "Trine",
-      "orb": 0.9575646135604075,
+      "orb": 0.9574645854354458,
       "planet1": "Moon",
       "planet2": "Jupiter"
     },
     {
       "applying": false,
       "aspect": "Semi-square",
-      "orb": 5.396121394143677,
+      "orb": 5.396113847922379,
       "planet1": "Moon",
       "planet2": "Saturn"
     },
     {
       "applying": false,
       "aspect": "Sextile",
-      "orb": 0.2803101669229022,
+      "orb": 0.28031267477780375,
       "planet1": "Moon",
       "planet2": "Uranus"
     },
     {
       "applying": true,
       "aspect": "Sextile",
-      "orb": 5.967731799978708,
+      "orb": 5.967749974170204,
       "planet1": "Moon",
       "planet2": "Neptune"
     },
     {
       "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 4.471631116362232,
+      "planet1": "Moon",
+      "planet2": "Pallas Athena"
+    },
+    {
+      "applying": true,
+      "aspect": "Trine",
+      "orb": 0.4090698449169281,
+      "planet1": "Moon",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": true,
       "aspect": "Semi-square",
-      "orb": 0.46041945479299784,
+      "orb": 0.46044213259304456,
       "planet1": "Mercury",
       "planet2": "Mars"
     },
     {
       "applying": false,
+      "aspect": "Quincunx",
+      "orb": 0.09876930581452825,
+      "planet1": "Mercury",
+      "planet2": "Ceres"
+    },
+    {
+      "applying": true,
       "aspect": "Sextile",
-      "orb": 3.9529376200629827,
+      "orb": 5.999467200334266,
+      "planet1": "Mercury",
+      "planet2": "Pallas Athena"
+    },
+    {
+      "applying": false,
+      "aspect": "Quincunx",
+      "orb": 0.2817734271616814,
+      "planet1": "Mercury",
+      "planet2": "Pholus"
+    },
+    {
+      "applying": false,
+      "aspect": "Sextile",
+      "orb": 3.952808500521229,
       "planet1": "Venus",
       "planet2": "Mars"
     },
     {
       "applying": false,
       "aspect": "Quincunx",
-      "orb": 1.0730562214364454,
+      "orb": 1.0731156356246743,
       "planet1": "Venus",
       "planet2": "Jupiter"
     },
     {
       "applying": true,
       "aspect": "Semi-sextile",
-      "orb": 0.3958017747989402,
+      "orb": 0.39596372496703225,
       "planet1": "Venus",
       "planet2": "Uranus"
     },
     {
       "applying": false,
       "aspect": "Semi-sextile",
-      "orb": 5.85224019210267,
+      "orb": 5.852098923980975,
       "planet1": "Venus",
       "planet2": "Neptune"
     },
     {
       "applying": false,
+      "aspect": "Sesquiquadrate",
+      "orb": 4.314481327299745,
+      "planet1": "Venus",
+      "planet2": "Ceres"
+    },
+    {
+      "applying": false,
+      "aspect": "Sextile",
+      "orb": 4.587282166551461,
+      "planet1": "Venus",
+      "planet2": "Pallas Athena"
+    },
+    {
+      "applying": true,
+      "aspect": "Sesquiquadrate",
+      "orb": 4.131477205952592,
+      "planet1": "Venus",
+      "planet2": "Pholus"
+    },
+    {
+      "applying": false,
+      "aspect": "Square",
+      "orb": 0.2934187947276996,
+      "planet1": "Venus",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": false,
       "aspect": "Quincunx",
-      "orb": 5.025993841499428,
+      "orb": 5.025924136145932,
       "planet1": "Mars",
       "planet2": "Jupiter"
     },
     {
       "applying": false,
       "aspect": "Semi-sextile",
-      "orb": 5.535449377917303,
+      "orb": 5.535426601367163,
       "planet1": "Mars",
       "planet2": "Saturn"
     },
     {
       "applying": true,
       "aspect": "Semi-sextile",
-      "orb": 4.348739394861923,
+      "orb": 4.348772225488261,
       "planet1": "Mars",
       "planet2": "Uranus"
     },
     {
       "applying": false,
       "aspect": "Semi-sextile",
-      "orb": 1.8993025720396872,
+      "orb": 1.899290423459746,
       "planet1": "Mars",
       "planet2": "Neptune"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 3.9018010379141685,
+      "planet1": "Mars",
+      "planet2": "Juno"
+    },
+    {
+      "applying": true,
+      "aspect": "Quincunx",
+      "orb": 3.6522809631391624,
+      "planet1": "Mars",
+      "planet2": "Chiron"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-sextile",
+      "orb": 3.6593897057935294,
+      "planet1": "Mars",
+      "planet2": "Black Moon Lilith"
     },
     {
       "applying": false,
       "aspect": "Opposition",
-      "orb": 0.6772544466375052,
+      "orb": 0.677151910657642,
       "planet1": "Jupiter",
       "planet2": "Uranus"
     },
     {
       "applying": false,
       "aspect": "Sesquiquadrate",
-      "orb": 3.0218724867530113,
+      "orb": 3.0219936186402947,
       "planet1": "Jupiter",
       "planet2": "Pluto"
     },
     {
       "applying": true,
+      "aspect": "Square",
+      "orb": 3.5141665309267864,
+      "planet1": "Jupiter",
+      "planet2": "Pallas Athena"
+    },
+    {
+      "applying": true,
       "aspect": "Sesquiquadrate",
-      "orb": 1.6967704768758836,
+      "orb": 2.5774234684178055,
+      "planet1": "Jupiter",
+      "planet2": "Vesta"
+    },
+    {
+      "applying": true,
+      "aspect": "Sesquiquadrate",
+      "orb": 1.696839093941378,
       "planet1": "Jupiter",
       "planet2": "North Node"
     },
     {
+      "applying": true,
+      "aspect": "Trine",
+      "orb": 1.366534430352388,
+      "planet1": "Jupiter",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-square",
+      "orb": 1.6968390939413638,
+      "planet1": "Jupiter",
+      "planet2": "South Node"
+    },
+    {
       "applying": false,
       "aspect": "Conjunction",
-      "orb": 3.6361468058776154,
+      "orb": 3.6361361779074173,
       "planet1": "Saturn",
       "planet2": "Neptune"
     },
     {
       "applying": true,
       "aspect": "Sextile",
-      "orb": 1.416684293830258,
+      "orb": 1.4166556438466102,
       "planet1": "Saturn",
       "planet2": "Pluto"
-    },
-    {
-      "applying": false,
-      "aspect": "Semi-sextile",
-      "orb": 2.7417863037073857,
-      "planet1": "Saturn",
-      "planet2": "North Node"
-    },
-    {
-      "applying": false,
-      "aspect": "Semi-square",
-      "orb": 3.6991269333905166,
-      "planet1": "Uranus",
-      "planet2": "Pluto"
-    },
-    {
-      "applying": true,
-      "aspect": "Semi-square",
-      "orb": 2.374024923513389,
-      "planet1": "Uranus",
-      "planet2": "North Node"
     },
     {
       "applying": true,
       "aspect": "Sextile",
-      "orb": 5.052831099707873,
-      "planet1": "Neptune",
+      "orb": 1.6336255634529948,
+      "planet1": "Saturn",
+      "planet2": "Juno"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 1.861225794069128,
+      "planet1": "Saturn",
+      "planet2": "Vesta"
+    },
+    {
+      "applying": true,
+      "aspect": "Opposition",
+      "orb": 1.883145638228001,
+      "planet1": "Saturn",
+      "planet2": "Chiron"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-sextile",
+      "orb": 2.7418101685455554,
+      "planet1": "Saturn",
+      "planet2": "North Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Quincunx",
+      "orb": 2.7418101685455554,
+      "planet1": "Saturn",
+      "planet2": "South Node"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-square",
+      "orb": 3.699145529297965,
+      "planet1": "Uranus",
       "planet2": "Pluto"
     },
     {
       "applying": false,
       "aspect": "Square",
-      "orb": 1.3251020098771278,
+      "orb": 4.1913184415844285,
+      "planet1": "Uranus",
+      "planet2": "Pallas Athena"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-square",
+      "orb": 3.2545753790754475,
+      "planet1": "Uranus",
+      "planet2": "Vesta"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-square",
+      "orb": 2.37399100459902,
+      "planet1": "Uranus",
+      "planet2": "North Node"
+    },
+    {
+      "applying": false,
+      "aspect": "Sextile",
+      "orb": 0.6893825196947319,
+      "planet1": "Uranus",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": false,
+      "aspect": "Sesquiquadrate",
+      "orb": 2.37399100459902,
+      "planet1": "Uranus",
+      "planet2": "South Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Sextile",
+      "orb": 5.0527918217540275,
+      "planet1": "Neptune",
+      "planet2": "Pluto"
+    },
+    {
+      "applying": false,
+      "aspect": "Sextile",
+      "orb": 2.0025106144544225,
+      "planet1": "Neptune",
+      "planet2": "Juno"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 5.497361971976545,
+      "planet1": "Neptune",
+      "planet2": "Vesta"
+    },
+    {
+      "applying": true,
+      "aspect": "Opposition",
+      "orb": 1.7529905396794163,
+      "planet1": "Neptune",
+      "planet2": "Chiron"
+    },
+    {
+      "applying": true,
+      "aspect": "Sextile",
+      "orb": 5.5586801292532755,
+      "planet1": "Neptune",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": false,
+      "aspect": "Sesquiquadrate",
+      "orb": 0.49217291228649174,
+      "planet1": "Pluto",
+      "planet2": "Pallas Athena"
+    },
+    {
+      "applying": true,
+      "aspect": "Conjunction",
+      "orb": 3.050281207299605,
+      "planet1": "Pluto",
+      "planet2": "Juno"
+    },
+    {
+      "applying": true,
+      "aspect": "Square",
+      "orb": 0.44457015022251767,
+      "planet1": "Pluto",
+      "planet2": "Vesta"
+    },
+    {
+      "applying": false,
+      "aspect": "Trine",
+      "orb": 3.299801282074611,
+      "planet1": "Pluto",
+      "planet2": "Chiron"
+    },
+    {
+      "applying": false,
+      "aspect": "Square",
+      "orb": 1.3251545246989451,
       "planet1": "Pluto",
       "planet2": "North Node"
+    },
+    {
+      "applying": false,
+      "aspect": "Square",
+      "orb": 1.3251545246989451,
+      "planet1": "Pluto",
+      "planet2": "South Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Sesquiquadrate",
+      "orb": 3.5401282111356522,
+      "planet1": "Ceres",
+      "planet2": "Juno"
+    },
+    {
+      "applying": true,
+      "aspect": "Conjunction",
+      "orb": 0.18300412134716737,
+      "planet1": "Ceres",
+      "planet2": "Pholus"
+    },
+    {
+      "applying": false,
+      "aspect": "Sesquiquadrate",
+      "orb": 4.021062532572046,
+      "planet1": "Ceres",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": true,
+      "aspect": "Sesquiquadrate",
+      "orb": 2.5581082950131133,
+      "planet1": "Pallas Athena",
+      "planet2": "Juno"
+    },
+    {
+      "applying": false,
+      "aspect": "Semi-square",
+      "orb": 0.936743062508981,
+      "planet1": "Pallas Athena",
+      "planet2": "Vesta"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-square",
+      "orb": 1.8173274369854084,
+      "planet1": "Pallas Athena",
+      "planet2": "North Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Quincunx",
+      "orb": 4.880700961279189,
+      "planet1": "Pallas Athena",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": false,
+      "aspect": "Sesquiquadrate",
+      "orb": 1.8173274369854369,
+      "planet1": "Pallas Athena",
+      "planet2": "South Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Square",
+      "orb": 3.4948513575221227,
+      "planet1": "Juno",
+      "planet2": "Vesta"
+    },
+    {
+      "applying": false,
+      "aspect": "Trine",
+      "orb": 0.24952007477500615,
+      "planet1": "Juno",
+      "planet2": "Chiron"
+    },
+    {
+      "applying": false,
+      "aspect": "Sesquiquadrate",
+      "orb": 3.7231323324828054,
+      "planet1": "Juno",
+      "planet2": "Pholus"
+    },
+    {
+      "applying": false,
+      "aspect": "Square",
+      "orb": 4.37543573199855,
+      "planet1": "Juno",
+      "planet2": "North Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Square",
+      "orb": 4.37543573199855,
+      "planet1": "Juno",
+      "planet2": "South Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Quincunx",
+      "orb": 3.744371432297129,
+      "planet1": "Vesta",
+      "planet2": "Chiron"
+    },
+    {
+      "applying": false,
+      "aspect": "Conjunction",
+      "orb": 0.8805843744764275,
+      "planet1": "Vesta",
+      "planet2": "North Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Opposition",
+      "orb": 0.8805843744764275,
+      "planet1": "Vesta",
+      "planet2": "South Node"
+    },
+    {
+      "applying": false,
+      "aspect": "Quincunx",
+      "orb": 4.624955806773556,
+      "planet1": "Chiron",
+      "planet2": "North Node"
+    },
+    {
+      "applying": true,
+      "aspect": "Semi-sextile",
+      "orb": 4.624955806773556,
+      "planet1": "Chiron",
+      "planet2": "South Node"
+    },
+    {
+      "applying": false,
+      "aspect": "Sesquiquadrate",
+      "orb": 3.8380584112248926,
+      "planet1": "Pholus",
+      "planet2": "Black Moon Lilith"
+    },
+    {
+      "applying": false,
+      "aspect": "Opposition",
+      "orb": 0.0,
+      "planet1": "North Node",
+      "planet2": "South Node"
     }
   ],
   "coordinates": {
     "latitude": 40.7127281,
     "longitude": -74.0060152
   },
+  "fixed_stars": [
+    {
+      "latitude": 0.464488638357757,
+      "longitude": 149.69724119975453,
+      "magnitude": 0.0,
+      "name": "Regulus"
+    },
+    {
+      "latitude": -2.053530648837146,
+      "longitude": 203.7038424816102,
+      "magnitude": 0.0,
+      "name": "Spica"
+    },
+    {
+      "latitude": -4.568382746184145,
+      "longitude": 249.6210171755119,
+      "magnitude": 0.0,
+      "name": "Antares"
+    },
+    {
+      "latitude": -5.468324462990797,
+      "longitude": 69.65764141560832,
+      "magnitude": 0.0,
+      "name": "Aldebaran"
+    },
+    {
+      "latitude": 22.428960054671208,
+      "longitude": 56.035879040111816,
+      "magnitude": 0.0,
+      "name": "Algol"
+    },
+    {
+      "latitude": -21.13601562343346,
+      "longitude": 333.7189308377198,
+      "magnitude": 0.0,
+      "name": "Fomalhaut"
+    },
+    {
+      "latitude": -39.602819029053684,
+      "longitude": 103.95467378287267,
+      "magnitude": 0.0,
+      "name": "Sirius"
+    },
+    {
+      "latitude": -16.01716717515444,
+      "longitude": 115.65672044452428,
+      "magnitude": 0.0,
+      "name": "Procyon"
+    },
+    {
+      "latitude": 61.73369884342457,
+      "longitude": 285.1672811488726,
+      "magnitude": 0.0,
+      "name": "Vega"
+    },
+    {
+      "latitude": 29.304737564681567,
+      "longitude": 301.6323227851843,
+      "magnitude": 0.0,
+      "name": "Altair"
+    },
+    {
+      "latitude": -16.028677859047377,
+      "longitude": 88.62405602775875,
+      "magnitude": 0.0,
+      "name": "Betelgeuse"
+    },
+    {
+      "latitude": 6.683346940675732,
+      "longitude": 113.08660454539134,
+      "magnitude": 0.0,
+      "name": "Pollux"
+    },
+    {
+      "latitude": -5.606236726952941,
+      "longitude": 266.7097041946869,
+      "magnitude": 0.0,
+      "name": "Galactic Center"
+    }
+  ],
   "houses": {
     "ascendant": {
       "longitude": 20.664869062526854,
@@ -334,122 +806,234 @@
     }
   },
   "input": {
+    "city": "New York, USA",
+    "country": "",
     "date": "1990-01-01",
     "house_system": "whole_sign",
-    "location": "New York, USA",
+    "state": "",
     "time": "12:00",
     "timezone": "America/New_York"
   },
+  "lots": [
+    {
+      "longitude": 325.6132654719445,
+      "name": "Lot of Fortune",
+      "position": 25.613265471944487,
+      "sign": "Aquarius"
+    },
+    {
+      "longitude": 75.71647265310924,
+      "name": "Lot of Spirit",
+      "position": 15.716472653109236,
+      "sign": "Gemini"
+    },
+    {
+      "longitude": 355.49761442175526,
+      "name": "Lot of Eros",
+      "position": 25.49761442175526,
+      "sign": "Pisces"
+    },
+    {
+      "longitude": 16.00937931986686,
+      "name": "Lot of Necessity",
+      "position": 16.00937931986686,
+      "sign": "Aries"
+    },
+    {
+      "longitude": 206.57073005737993,
+      "name": "Lot of Victory",
+      "position": 26.570730057379933,
+      "sign": "Libra"
+    },
+    {
+      "longitude": 51.54480592123402,
+      "name": "Lot of Courage",
+      "position": 21.544805921234023,
+      "sign": "Taurus"
+    },
+    {
+      "longitude": 6.084363788640978,
+      "name": "Lot of Nemesis",
+      "position": 6.084363788640978,
+      "sign": "Aries"
+    }
+  ],
   "planets": [
     {
-      "distance": 0.9833250264923047,
+      "distance": 0.9833249342450774,
       "id": 0,
-      "latitude": 2.0062390251214924e-05,
-      "longitude": 281.0266448163021,
+      "latitude": 2.0665321656138925e-05,
+      "longitude": 281.0266503393097,
       "name": "Sun",
-      "position": 11.02664481630211,
+      "position": 11.026650339309697,
       "retrograde": false,
       "sign": "Capricorn",
-      "speed": 1.0194603009257137
+      "speed": 1.019462990634264
     },
     {
-      "distance": 0.002531030511568429,
+      "distance": 0.0025310232001544914,
       "id": 1,
-      "latitude": 1.7138624817745831,
-      "longitude": 336.07828534095154,
+      "latitude": 1.713871751123451,
+      "longitude": 336.07825392989207,
       "name": "Moon",
-      "position": 6.078285340951538,
+      "position": 6.078253929892071,
       "retrograde": false,
       "sign": "Pisces",
-      "speed": 13.51168357052273
+      "speed": 13.511712158542661
     },
     {
-      "distance": 0.7665912273237507,
+      "distance": 0.7665913339066586,
       "id": 2,
-      "latitude": 0.6958221074639086,
-      "longitude": 295.60713402368356,
+      "latitude": 0.69581793195237,
+      "longitude": 295.6071556131956,
       "name": "Mercury",
-      "position": 25.607134023683557,
+      "position": 25.607155613195573,
       "retrograde": true,
       "sign": "Capricorn",
-      "speed": -0.3358628783472712
+      "speed": -0.33586828318457645
     },
     {
-      "distance": 0.3046016218463865,
+      "distance": 0.30460175673773787,
       "id": 3,
-      "latitude": 1.9525247281247347,
-      "longitude": 306.1937769488276,
+      "latitude": 1.9524928086894533,
+      "longitude": 306.1939049800813,
       "name": "Venus",
-      "position": 6.193776948827576,
+      "position": 6.1939049800812995,
       "retrograde": true,
       "sign": "Aquarius",
-      "speed": -0.1390526372342865
+      "speed": -0.1390505418758956
     },
     {
-      "distance": 2.306399063065535,
+      "distance": 2.3063987004005226,
       "id": 4,
-      "latitude": -0.0352204217807123,
-      "longitude": 250.14671456889056,
+      "latitude": -0.0352266632695452,
+      "longitude": 250.14671348060253,
       "name": "Mars",
-      "position": 10.146714568890559,
+      "position": 10.146713480602529,
       "retrograde": false,
       "sign": "Sagittarius",
-      "speed": 0.7038703361628688
+      "speed": 0.7038720265456415
     },
     {
-      "distance": 4.171938023694304,
+      "distance": 4.1719358602132095,
       "id": 5,
-      "latitude": -0.11645362563402224,
-      "longitude": 95.12072072739113,
+      "latitude": -0.11648398033510539,
+      "longitude": 95.12078934445661,
       "name": "Jupiter",
-      "position": 5.120720727391131,
+      "position": 5.120789344456611,
       "retrograde": true,
       "sign": "Cancer",
-      "speed": -0.13436489555196812
+      "speed": -0.134364571922352
     },
     {
-      "distance": 11.006846551160443,
+      "distance": 11.006849561266478,
       "id": 6,
-      "latitude": 0.2930470040707644,
-      "longitude": 285.68216394680786,
+      "latitude": 0.29305506793184183,
+      "longitude": 285.6821400819697,
       "name": "Saturn",
-      "position": 15.682163946807862,
+      "position": 15.682140081969692,
       "retrograde": false,
       "sign": "Capricorn",
-      "speed": 0.11828976200249136
+      "speed": 0.1182897210095442
     },
     {
-      "distance": 20.359169023422577,
+      "distance": 20.359162281239513,
       "id": 7,
-      "latitude": -0.270139911298294,
-      "longitude": 275.79797517402864,
+      "latitude": -0.2701331949175544,
+      "longitude": 275.79794125511427,
       "name": "Uranus",
-      "position": 5.797975174028636,
+      "position": 5.797941255114267,
       "retrograde": false,
       "sign": "Capricorn",
-      "speed": 0.059990604409726346
+      "speed": 0.059990474622691636
     },
     {
-      "distance": 31.19349437112108,
+      "distance": 31.19349406810825,
       "id": 8,
-      "latitude": 0.8473322422628713,
-      "longitude": 282.04601714093025,
+      "latitude": 0.8473198334073649,
+      "longitude": 282.0460039040623,
       "name": "Neptune",
-      "position": 12.046017140930246,
+      "position": 12.046003904062275,
       "retrograde": false,
       "sign": "Capricorn",
-      "speed": 0.037903727002270425
+      "speed": 0.037903578622345745
     },
     {
-      "distance": 30.203700168236352,
+      "distance": 30.203621093404585,
       "id": 9,
-      "latitude": 15.28570366812667,
-      "longitude": 227.09884824063812,
+      "latitude": 15.285709685876224,
+      "longitude": 227.0987957258163,
       "name": "Pluto",
-      "position": 17.09884824063812,
+      "position": 17.098795725816302,
       "retrograde": false,
       "sign": "Scorpio",
-      "speed": 0.027224554008163402
+      "speed": 0.027224503075891863
+    },
+    {
+      "distance": 1.6902584672510153,
+      "id": 10001,
+      "latitude": 3.1039047148524808,
+      "longitude": 85.50838630738106,
+      "name": "Ceres",
+      "position": 25.50838630738106,
+      "retrograde": true,
+      "sign": "Gemini",
+      "speed": -0.2169251995140349
+    },
+    {
+      "distance": 2.6202436261981767,
+      "id": 10002,
+      "latitude": -20.117274924514703,
+      "longitude": 1.6066228135298193,
+      "name": "Pallas Athena",
+      "position": 1.6066228135298193,
+      "retrograde": false,
+      "sign": "Aries",
+      "speed": 0.22651017139360108
+    },
+    {
+      "distance": 3.655030813296785,
+      "id": 10003,
+      "latitude": 7.2505904376787305,
+      "longitude": 224.0485145185167,
+      "name": "Juno",
+      "position": 14.048514518516697,
+      "retrograde": false,
+      "sign": "Scorpio",
+      "speed": 0.2725203310693239
+    },
+    {
+      "distance": 3.0123345625026965,
+      "id": 10004,
+      "latitude": -4.087968456282237,
+      "longitude": 317.5433658760388,
+      "name": "Vesta",
+      "position": 17.54336587603882,
+      "retrograde": false,
+      "sign": "Aquarius",
+      "speed": 0.4829412147116169
+    },
+    {
+      "distance": 10.337488715831006,
+      "id": 15,
+      "latitude": -7.305942317390661,
+      "longitude": 103.79899444374169,
+      "name": "Chiron",
+      "position": 13.798994443741691,
+      "retrograde": true,
+      "sign": "Cancer",
+      "speed": -0.06850005449300711
+    },
+    {
+      "distance": 8.194694158398576,
+      "id": 16,
+      "latitude": -15.345200246506774,
+      "longitude": 85.32538218603389,
+      "name": "Pholus",
+      "position": 25.32538218603389,
+      "retrograde": true,
+      "sign": "Gemini",
+      "speed": -0.07490126666508429
     },
     {
       "distance": 0.00256955528979999,
@@ -461,6 +1045,29 @@
       "retrograde": true,
       "sign": "Aquarius",
       "speed": -0.0529618133117423
+    },
+    {
+      "distance": 0.002710625131722547,
+      "id": 12,
+      "latitude": -5.034715442905823,
+      "longitude": 216.487323774809,
+      "name": "Black Moon Lilith",
+      "position": 6.487323774808999,
+      "retrograde": false,
+      "sign": "Scorpio",
+      "speed": 0.11200302635084547
+    },
+    {
+      "distance": 0.00256955528979999,
+      "id": 100000,
+      "latitude": -0.0,
+      "longitude": 138.42395025051525,
+      "name": "South Node",
+      "note": "South Node is always 180\u00b0 from North Node, never calculated with swe.calc_ut.",
+      "position": 18.423950250515247,
+      "retrograde": true,
+      "sign": "Leo",
+      "speed": 0.0529618133117423
     }
   ],
   "utc_time": {

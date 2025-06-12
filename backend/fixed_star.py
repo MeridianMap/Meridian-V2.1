@@ -4,18 +4,54 @@ import swisseph as swe
 # List of fixed stars and their Swiss Ephemeris names
 FIXED_STARS = [
     {"name": "Regulus", "swe_name": "Regulus"},
-    {"name": "Spica", "swe_name": "Spica"},
-    {"name": "Antares", "swe_name": "Antares"},
     {"name": "Aldebaran", "swe_name": "Aldebaran"},
-    {"name": "Algol", "swe_name": "Algol"},
+    {"name": "Antares", "swe_name": "Antares"},
     {"name": "Fomalhaut", "swe_name": "Fomalhaut"},
-    {"name": "Sirius", "swe_name": "Sirius"},
-    {"name": "Procyon", "swe_name": "Procyon"},
-    {"name": "Vega", "swe_name": "Vega"},
-    {"name": "Altair", "swe_name": "Altair"},
-    {"name": "Betelgeuse", "swe_name": "Betelgeuz"},
+    {"name": "Alphard", "swe_name": "Alphard"},
+    {"name": "Alnilam", "swe_name": "Alnilam"},
+    {"name": "Alnitak", "swe_name": "Alnitak"},
+    {"name": "Bellatrix", "swe_name": "Bellatrix"},
+    {"name": "Betelgeuse", "swe_name": "Betelgeuze"},  # SE uses 'Betelgeuze'
+    {"name": "Mintaka", "swe_name": "Mintaka"},
+    {"name": "Rigel", "swe_name": "Rigel"},
+    {"name": "Unukalhai", "swe_name": "Unukalhai"},
+    {"name": "Acrab (Graffias)", "swe_name": "Acrab"},  # SE uses 'Acrab'
+    {"name": "Shaula", "swe_name": "Shaula"},
+    {"name": "Lesath", "swe_name": "Lesath"},
+    {"name": "Zubenelgenubi", "swe_name": "Zuben Elgenubi"},  # SE uses 'Zuben Elgenubi'
+    {"name": "Zubeneschamali", "swe_name": "Zuben Eschamali"},  # SE uses 'Zuben Eschamali'
+    {"name": "Deneb Algedi", "swe_name": "Deneb Algedi"},
+    {"name": "Sadalmelek", "swe_name": "Sadalmelik"},  # SE uses 'Sadalmelik'
+    {"name": "Sadalsuud", "swe_name": "Sadalsuud"},
+    {"name": "Capella", "swe_name": "Capella"},
+    {"name": "Castor", "swe_name": "Castor"},
     {"name": "Pollux", "swe_name": "Pollux"},
-    {"name": "Galactic Center", "swe_name": "Gal. Center"},
+    {"name": "Procyon", "swe_name": "Procyon"},
+    {"name": "Sirius", "swe_name": "Sirius"},
+    {"name": "Canopus", "swe_name": "Canopus"},
+    {"name": "Algol", "swe_name": "Algol"},
+    {"name": "Alpherg (Eta Piscium)", "swe_name": "Alpherg"},  # SE uses 'Alpherg'
+    {"name": "Alcyone", "swe_name": "Alcyone"},
+    {"name": "Mirach", "swe_name": "Mirach"},
+    {"name": "Scheat", "swe_name": "Scheat"},
+    {"name": "Markab", "swe_name": "Markab"},
+    {"name": "Thuban", "swe_name": "Thuban"},
+    {"name": "Eltanin", "swe_name": "Eltanin"},
+    {"name": "Alphecca", "swe_name": "Alphecca"},
+    {"name": "Altair", "swe_name": "Altair"},
+    {"name": "Deneb", "swe_name": "Deneb"},
+    {"name": "Albireo", "swe_name": "Albireo"},
+    {"name": "Achernar", "swe_name": "Achernar"},
+    {"name": "Ankaa", "swe_name": "Ankaa"},
+    {"name": "Menkar", "swe_name": "Menkar"},
+    {"name": "Mirzam", "swe_name": "Mirzam"},
+    {"name": "Spica", "swe_name": "Spica"},
+    {"name": "Vindemiatrix", "swe_name": "Vindemiatrix"},
+    {"name": "Algorab", "swe_name": "Algorab"},
+    {"name": "Facies", "swe_name": "Facies"},
+    {"name": "Rasalhague", "swe_name": "Rasalhague"},
+    {"name": "Rastaban", "swe_name": "Rastaban"},
+    {"name": "Galactic Center", "swe_name": "Gal. Center"}  # Not a star, but included for reference
 ]
 
 def get_fixed_star_positions(jd):

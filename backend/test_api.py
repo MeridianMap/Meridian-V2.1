@@ -8,6 +8,8 @@ import requests
 import json
 import sys
 import os
+import subprocess
+import signal
 
 # Test data
 test_data = {
@@ -22,9 +24,11 @@ def test_backend_api():
     """Test the backend API with sample birth information"""
     print("Testing Swiss Ephemeris backend API...")
     
-    # Start the Flask API
+    # Start the Flask API using subprocess on Windows
     print("Starting Flask API...")
-    os.system("cd /home/ubuntu/astro-app && python3 backend/api.py > /dev/null 2>&1 &")
+    api_process = subprocess.Popen([
+        sys.executable, "api.py"
+    ], cwd=os.path.dirname(os.path.abspath(__file__)), creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
     
     # Wait for the API to start
     print("Waiting for API to start...")
@@ -65,13 +69,22 @@ def test_backend_api():
             
             # Verify the response contains the expected data
             print("\nVerifying response data...")
-            
-            # Check input data
-            assert result["input"]["date"] == test_data["birth_date"], "Birth date mismatch"
-            assert result["input"]["time"] == test_data["birth_time"], "Birth time mismatch"
-            assert result["input"]["location"] == test_data["birth_location"], "Birth location mismatch"
-            assert result["input"]["timezone"] == test_data["timezone"], "Timezone mismatch"
-            assert result["input"]["house_system"] == test_data["house_system"], "House system mismatch"
+            try:
+                # Check input data
+                assert "input" in result, f"'input' missing in response: {result}"
+                assert "date" in result["input"], f"'date' missing in input: {result['input']}"
+                assert "time" in result["input"], f"'time' missing in input: {result['input']}"
+                assert "city" in result["input"], f"'city' missing in input: {result['input']}"
+                assert "timezone" in result["input"], f"'timezone' missing in input: {result['input']}"
+                assert "house_system" in result["input"], f"'house_system' missing in input: {result['input']}"
+                assert result["input"]["date"] == test_data["birth_date"], "Birth date mismatch"
+                assert result["input"]["time"] == test_data["birth_time"], "Birth time mismatch"
+                assert result["input"]["city"] == test_data["birth_location"], "Birth location mismatch"
+                assert result["input"]["timezone"] == test_data["timezone"], "Timezone mismatch"
+                assert result["input"]["house_system"] == test_data["house_system"], "House system mismatch"
+            except Exception as e:
+                print(f"Assertion error: {e}\nFull response: {json.dumps(result, indent=2)}")
+                raise
             
             # Check coordinates
             assert "latitude" in result["coordinates"], "Latitude missing"
@@ -99,9 +112,9 @@ def test_backend_api():
             print("\nAll checks passed! Backend API is working correctly.")
             
             # Save a sample of the response to a file
-            with open("/home/ubuntu/astro-app/backend/sample_response.json", "w") as f:
+            with open(os.path.join(os.path.dirname(__file__), "sample_response.json"), "w") as f:
                 json.dump(result, f, indent=2)
-            print("\nSample response saved to /home/ubuntu/astro-app/backend/sample_response.json")
+            print(f"\nSample response saved to {os.path.join(os.path.dirname(__file__), 'sample_response.json')}")
             
         else:
             print(f"Error: {calculate_response.json()}")
@@ -110,9 +123,11 @@ def test_backend_api():
         print(f"Error testing API: {e}")
     
     finally:
-        # Kill the Flask API
+        # Kill the Flask API process on Windows
         print("\nStopping Flask API...")
-        os.system("kill $(lsof -t -i:5000) 2>/dev/null")
+        if api_process.poll() is None:
+            api_process.send_signal(signal.CTRL_BREAK_EVENT)
+            api_process.wait(timeout=5)
 
 if __name__ == "__main__":
     test_backend_api()

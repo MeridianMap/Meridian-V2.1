@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.pytest_cache/
+venv/
+.env
+
+# Node.js
+node_modules/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Lock files
+package-lock.json
+
+# VSCode
+.vscode/
+
+# Ignore swisseph doc/media images (optional, remove if you want to keep them in repo)
+swisseph doc/media/

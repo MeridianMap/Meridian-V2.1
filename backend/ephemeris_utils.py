@@ -21,6 +21,25 @@ def ensure_ephemeris_dir():
 
 
 def initialize_ephemeris():
+    import swisseph as swe
+    import os
+    ephe_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "ephe"))
+    swe.set_ephe_path(ephe_dir)
+    # ---- sanity check --------------------------------------------------
+    EPHE_REQUIRED = [
+        "sepl_18.se1",             # planets 1800-2399
+        "seas_18.se1",             # main asteroids
+        "sefstars.txt"             # fixed-star catalogue
+    ]
+    missing = [f for f in EPHE_REQUIRED if not os.path.exists(os.path.join(ephe_dir, f))]
+    print("[EPHE] Using:", ephe_dir, "   missing:", missing)
+    if missing:
+        raise FileNotFoundError(
+            "Swiss-Ephemeris cannot find: " + ", ".join(missing) +
+            ".  Put them in backend/ephe or adjust swe.set_ephe_path."
+        )
+    # --------------------------------------------------------------------
+
     try:
         # ✅ Set to the correct local ephemeris directory
         local_ephe_path = os.path.join(os.path.dirname(__file__), "ephe")
@@ -175,10 +194,9 @@ def calculate_extended_planets(jd_ut, use_extended=False):
             # If this is an asteroid and the error is about missing files, try to download
             if planet_id in [swe.CHIRON, swe.PHOLUS, swe.CERES, swe.PALLAS, swe.JUNO, swe.VESTA]:
                 if "SwissEph file" in str(e) and "not found" in str(e):
-                    print(f"Attempting to download missing asteroid files...")
-                    download_asteroid_files()
+                    print(f"Missing asteroid file for {planet_name}. Please add the required .se1 file to the backend/ephe/ folder.")
     
-    # Add South Node as 180° opposite the North Node
+    # Add South Node as 180° opposite the North Node (never call swe.calc_ut for South Node)
     north_node = next((p for p in planets if p['name'] == "North Node"), None)
     if north_node:
         south_node_long = (north_node['longitude'] + 180) % 360
@@ -191,7 +209,8 @@ def calculate_extended_planets(jd_ut, use_extended=False):
             'speed': -north_node['speed'],
             'sign': ZODIAC_SIGNS[int(south_node_long / 30) % 12],
             'position': south_node_long % 30,
-            'retrograde': north_node['retrograde']
+            'retrograde': north_node['retrograde'],
+            'note': 'South Node is always 180° from North Node, never calculated with swe.calc_ut.'
         })
     
     return planets
