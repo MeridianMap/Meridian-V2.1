@@ -22,26 +22,59 @@ import swisseph as swe
 import numpy as np
 
 # --- Midheaven helpers --------------------------------------------
+def get_true_obliquity(jd_tt):
+    """
+    Get the true obliquity of the ecliptic for the given Julian day (TT).
+    Uses Swiss Ephemeris if available, otherwise falls back to mean obliquity.
+    Returns obliquity in radians.
+    """
+    try:
+        # Try to use Swiss Ephemeris nutation function if available
+        # swe.nutation returns nutation in longitude and obliquity (arcseconds)
+        dpsi, deps = swe.nutation(jd_tt)
+        # Mean obliquity (arcsec)
+        T = (jd_tt - 2451545.0) / 36525.0
+        mean_seconds = 84381.406 \
+            - 46.836769 * T \
+            - 0.0001831 * T**2 \
+            + 0.00200340 * T**3 \
+            - 0.000000576 * T**4 \
+            - 0.0000000434 * T**5
+        # True obliquity = mean + nutation in obliquity
+        true_seconds = mean_seconds + deps
+        return np.deg2rad(true_seconds / 3600.0)
+    except Exception as e:
+        # Fallback to mean obliquity
+        T = (jd_tt - 2451545.0) / 36525.0
+        seconds = 84381.406 \
+            - 46.836769 * T \
+            - 0.0001831 * T**2 \
+            + 0.00200340 * T**3 \
+            - 0.000000576 * T**4 \
+            - 0.0000000434 * T**5
+        return np.deg2rad(seconds / 3600.0)
+
 _OBLIQ = np.deg2rad(23.4392911)          # mean obliquity J2000
 
-def ecl_lon_of_mc(gst_deg, geo_lon_deg):
+def ecl_lon_of_mc(gst_deg, geo_lon_deg, obliq):
     """
-    Ecliptic longitude (λ_M C) of the local meridian, given
-    Greenwich sidereal time gst_deg (°) and site longitude geo_lon_deg (° E).
+    Ecliptic longitude (λ_MC) of the local meridian, given
+    Greenwich sidereal time gst_deg (°), site longitude geo_lon_deg (° E),
+    and true obliquity (radians).
     Formula:  tan λ = tan θ ⋅ cos ε , where θ = LST = gst + λ_geo.
     """
     lst = np.deg2rad((gst_deg + geo_lon_deg) % 360)
-    return np.rad2deg(np.arctan2(np.sin(lst) * np.cos(_OBLIQ),
+    return np.rad2deg(np.arctan2(np.sin(lst) * np.cos(obliq),
                                  np.cos(lst))) % 360
 
-def geo_lon_for_mc(target_ecl_lon, gst_deg):
+def geo_lon_for_mc(target_ecl_lon, gst_deg, obliq):
     """
     Geographic longitude (° E, range –180…180) whose Midheaven’s
-    ecliptic longitude equals target_ecl_lon (°).
+    ecliptic longitude equals target_ecl_lon (°), given GST and obliquity.
     Inverse of the above relation:  tan θ = cos ε ⋅ tan λ .
     """
     lam = np.deg2rad(target_ecl_lon)
-    lst_deg = np.rad2deg(np.arctan2(np.cos(_OBLIQ) * np.sin(lam),
+    lst_deg = np.rad2deg(np.arctan2(np.cos(obliq) * np.sin(lam),
                                     np.cos(lam))) % 360
     return ((lst_deg - gst_deg + 540) % 360) - 180
 # ------------------------------------------------------------------
@@ -90,9 +123,13 @@ def calculate_aspect_lines(chart_data, debug=False):
     """
     features = []
     if not chart_data or "planets" not in chart_data or "utc_time" not in chart_data:
+        if debug:
+            print("[DEBUG] Missing chart_data, planets, or utc_time.")
         return features
     jd = chart_data["utc_time"].get("julian_day")
     if jd is None:
+        if debug:
+            print("[DEBUG] Missing julian_day in chart_data['utc_time'].")
         return features
     try:
         planet_pos = _get_planet_positions(chart_data, jd)
@@ -101,15 +138,18 @@ def calculate_aspect_lines(chart_data, debug=False):
         delta_t = swe.deltat(jd_ut)
         jd_tt = jd_ut + delta_t / 86400.0
         
-        # ------------------------------------------------------------------
+        # Get true obliquity for this date
+        obliq = get_true_obliquity(jd_tt)
         # MC aspect lines (planet ± 60°, 90°, 120° to the Midheaven)
-        gst_ut_deg = swe.sidtime(jd_ut) * 15.0      # GST in UT hours → degrees
+        # Use sidereal time based on UT, not TT, per Swiss Ephemeris docs and astro.com
+        gst_deg = swe.sidtime(jd_ut) * 15.0      # GST in UT hours → degrees
 
+        mc_count = 0
         for name, pos in planet_pos.items():
             plon = pos["ecl_lon"]                   # ecliptic longitude
             for delta in ASPECT_ANGLES + [-a for a in ASPECT_ANGLES]:
                 target = (plon - delta) % 360
-                lon_geo = geo_lon_for_mc(target, gst_ut_deg)
+                lon_geo = geo_lon_for_mc(target, gst_deg, obliq)
 
                 # draw full meridian
                 coords = [[lon_geo, -89.9], [lon_geo, 89.9]]
@@ -124,9 +164,13 @@ def calculate_aspect_lines(chart_data, debug=False):
                         "label": _aspect_label(name, delta, "MC")
                     },
                 })
+                mc_count += 1
+        if debug:
+            print(f"[DEBUG] MC aspect lines generated: {mc_count}")
         # ------------------------------------------------------------------
         # --- ASC aspect lines ---
-        lat_steps = np.linspace(-85, 85, 340)
+        lat_steps = np.arange(-85, 85.1, 0.1)  # 0.1° steps for finer resolution
+        asc_count = 0
         for pname, pos in planet_pos.items():
             planet_ecl_lon = pos["ecl_lon"]
             for delta in ASPECT_ANGLES + [-a for a in ASPECT_ANGLES]:
@@ -137,7 +181,8 @@ def calculate_aspect_lines(chart_data, debug=False):
                         target_asc = (planet_ecl_lon - delta) % 360
                         def asc_resid(lon):
                             try:
-                                cusps, ascmc = swe.houses_ex(jd_tt, lat, lon, b'P')
+                                # Use whole sign houses ('W') instead of Placidus ('P')
+                                cusps, ascmc = swe.houses_ex(jd_tt, lat, lon, b'W')
                                 asc = ascmc[0]
                                 diff = (asc - target_asc + 540) % 360 - 180
                                 return diff
@@ -222,12 +267,22 @@ def calculate_aspect_lines(chart_data, debug=False):
                         print(f"[WARN] ASC aspect: {pname} {ASPECT_LABELS[abs(delta)]} insufficient points.")
                     continue
                 lons, lats = (np.array(lons), np.array(lats))
+                # Sort by latitude for AC aspect lines
                 idx = np.argsort(lats)
                 lons, lats = lons[idx], lats[idx]
-                lons_s, lats_s = parametric_spline(lons, lats, density=300)
+                # Unwrap longitude sequence for continuity
+                lons_unwrapped = np.degrees(np.unwrap(np.radians(lons)))
+                lons_s, lats_s = parametric_spline(lons_unwrapped, lats, density=300)
+                # Already wrapped to [-180, 180] by parametric_spline
                 coords = list(zip(lons_s, lats_s))
+                # Split at dateline
                 segments = split_dateline(coords)
+                # Discard segments with large longitude jumps (to avoid horizontal artifacts)
+                cleaned_segments = []
                 for seg in segments:
+                    if all(abs(a[0] - b[0]) <= 90 for a, b in zip(seg, seg[1:])):
+                        cleaned_segments.append(seg)
+                for seg in cleaned_segments:
                     feat = {
                         "type": "Feature",
                         "geometry": {"type": "LineString", "coordinates": seg},
@@ -240,8 +295,57 @@ def calculate_aspect_lines(chart_data, debug=False):
                         }
                     }
                     features.append(feat)
+                    asc_count += 1
                 if debug and lons.size and lats.size:
                     print(f"[DEBUG] ASC {pname} {ASPECT_LABELS[abs(delta)]} points: {len(lons)}")
+        if debug:
+            print(f"[DEBUG] ASC aspect lines generated: {asc_count}")
+            print(f"[DEBUG] Total features generated: {len(features)}")
     except Exception as e:
         print(f"[ERR] Aspect line generation failed: {e}")
     return features
+
+# Set sidereal mode globally (Lahiri ayanamsha as example, can be changed)
+swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+
+if __name__ == "__main__":
+    import json
+    # Try to load a sample chart from debug_chart.json
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "debug_chart.json"), "r", encoding="utf-8") as f:
+            chart_data = json.load(f)
+        print("[DEBUG] Loaded debug_chart.json")
+    except Exception as e:
+        print(f"[ERR] Could not load debug_chart.json: {e}")
+        chart_data = None
+    if chart_data:
+        # Print raw MC, ASC, and planet longitudes for comparison
+        jd = chart_data["utc_time"].get("julian_day")
+        if jd is not None:
+            jd_ut = jd
+            delta_t = swe.deltat(jd_ut)
+            jd_tt = jd_ut + delta_t / 86400.0
+            obliq = get_true_obliquity(jd_tt)
+            gst_tt_deg = swe.sidtime(jd_tt) * 15.0
+            geo_lon = chart_data.get("longitude", 0.0)
+            geo_lat = chart_data.get("latitude", 0.0)
+            # MC
+            mc_ecl = ecl_lon_of_mc(gst_tt_deg, geo_lon, obliq)
+            print(f"[RAW] MC ecliptic longitude: {mc_ecl:.6f}")
+            # ASC
+            try:
+                cusps, ascmc = swe.houses_ex(jd_tt, geo_lat, geo_lon, b'W')
+                asc_ecl = ascmc[0]
+                print(f"[RAW] ASC ecliptic longitude: {asc_ecl:.6f}")
+            except Exception as e:
+                print(f"[ERR] swe.houses_ex failed for ASC: {e}")
+            # Planets
+            planet_pos = _get_planet_positions(chart_data, jd)
+            for pname, pos in planet_pos.items():
+                print(f"[RAW] {pname} ecliptic longitude: {pos['ecl_lon']:.6f}")
+        features = calculate_aspect_lines(chart_data, debug=True)
+        print(f"[DEBUG] Features generated: {len(features)}")
+        for feat in features[:3]:
+            print(json.dumps(feat, indent=2))
+    else:
+        print("[ERR] No chart data available for aspect line calculation.")

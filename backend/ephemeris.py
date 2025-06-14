@@ -21,14 +21,23 @@ def convert_to_utc(date_str, time_str, timezone_str):
     """
     Convert local time to UTC.
     Args:
-        date_str (str): Date in format "YYYY-MM-DD"
+        date_str (str): Date in format "YYYY-MM-DD" or "MM/DD/YYYY"
         time_str (str): Time in format "HH:MM"
         timezone_str (str): Timezone string (e.g., "America/New_York")
     Returns:
         tuple: (julian_day_ut, year, month, day, hour, minute, second) in UTC
     """
     try:
-        year, month, day = map(int, date_str.split('-'))
+        # Handle both date formats: "YYYY-MM-DD" and "MM/DD/YYYY"
+        if '-' in date_str:
+            # Format: "YYYY-MM-DD"
+            year, month, day = map(int, date_str.split('-'))
+        elif '/' in date_str:
+            # Format: "MM/DD/YYYY"
+            month, day, year = map(int, date_str.split('/'))
+        else:
+            raise ValueError(f"Unsupported date format: {date_str}")
+        
         hour, minute = map(int, time_str.split(':'))
         second = 0
         local_tz = pytz.timezone(timezone_str)
@@ -94,7 +103,7 @@ def calculate_chart(birth_date, birth_time, birth_city, birth_state="", birth_co
     """
     Calculate complete astrological chart by delegating to specialized modules.
     Args:
-        birth_date (str): Birth date in format "YYYY-MM-DD"
+        birth_date (str): Birth date in format "YYYY-MM-DD" or "MM/DD/YYYY"
         birth_time (str): Birth time in format "HH:MM"
         birth_city (str): City of birth
         birth_state (str, optional): State/province/region of birth

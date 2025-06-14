@@ -57,7 +57,13 @@ def find_line_crossings_and_latitude_lines(aspect_lines: Dict[str, List[List[flo
                     # Skip if latitude ranges do not overlap
                     minlat1, maxlat1 = min(pt[1] for pt in coords1), max(pt[1] for pt in coords1)
                     minlat2, maxlat2 = min(pt[1] for pt in coords2), max(pt[1] for pt in coords2)
+                    # Only consider crossings within latitude band (e.g., -68 to +68)
+                    LAT_BAND_MIN, LAT_BAND_MAX = -68, 68
                     if maxlat1 < minlat2 or maxlat2 < minlat1:
+                        continue
+                    if maxlat1 < LAT_BAND_MIN or minlat1 > LAT_BAND_MAX:
+                        continue
+                    if maxlat2 < LAT_BAND_MIN or minlat2 > LAT_BAND_MAX:
                         continue
                     pair_count += 1
                     for k in range(len(coords1) - 1):
@@ -68,7 +74,8 @@ def find_line_crossings_and_latitude_lines(aspect_lines: Dict[str, List[List[flo
                             intersection = seg1.intersection(seg2)
                             if isinstance(intersection, Point):
                                 lon, lat = intersection.x, intersection.y
-                                if abs(lat) > 70:
+                                # Only keep intersections within latitude band
+                                if abs(lat) > 68:
                                     continue
                                 intersection_count += 1
                                 lat_line_coords = draw_lat_line(lat)

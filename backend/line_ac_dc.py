@@ -29,15 +29,18 @@ import swisseph as swe
 from typing import List, Dict
 import numpy as np
 
-def split_dateline(seq):
-    """Split a lon/lat sequence wherever |Δlon| > 180°. Returns list of segments."""
+def split_dateline(seq, max_jump=45):
+    """Split a lon/lat sequence wherever |Δlon| > 180°. Filter out segments with any |Δlon| > max_jump (default 45°)."""
     segments, seg = [], [seq[0]]
     for (lon, lat) in seq[1:]:
         if abs(lon - seg[-1][0]) > 180:
-            segments.append(seg)
+            # Before appending, filter out zigzag segments
+            if all(abs(a[0] - b[0]) <= max_jump for a, b in zip(seg, seg[1:])):
+                segments.append(seg)
             seg = []
         seg.append((lon, lat))
-    segments.append(seg)
+    if all(abs(a[0] - b[0]) <= max_jump for a, b in zip(seg, seg[1:])):
+        segments.append(seg)
     return segments
 
 def generate_horizon_line(chart, planet, lat_steps, density=400):
@@ -91,19 +94,23 @@ def generate_horizon_line(chart, planet, lat_steps, density=400):
     segs = [
         {"label": "AC", "start": 0, "end": ac_end},
         {"label": "DC", "start": dc_start, "end": len(coords)-1}
-    ]
-    # GeoJSON output
+    ]    # GeoJSON output
     if len(segments) == 1:
         geometry = {"type": "LineString", "coordinates": segments[0]}
     else:
         geometry = {"type": "MultiLineString", "coordinates": segments}
+    
     feat = {
         "type": "Feature",
         "geometry": geometry,
         "properties": {
             "planet": planet,
             "line_type": "HORIZON",
-            "segments": segs
+            "segments": segs,
+            "ac_dc_indices": {
+                "ac_end": ac_end,
+                "dc_start": dc_start
+            }
         },
     }
     return feat

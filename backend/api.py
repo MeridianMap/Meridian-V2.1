@@ -24,7 +24,7 @@ from backend.location_utils import get_location_suggestions, detect_timezone_fro
 from backend.interpretation import generate_interpretation  # <-- NEW IMPORT
 from backend.astrocartography import calculate_astrocartography_lines_geojson
 from backend.utils import filter_lines_near_location
-from backend.parans import calculate_parans
+# from backend.parans import calculate_parans
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -33,6 +33,7 @@ CORS(app)  # Enable CORS for all routes
 def api_calculate_chart():
     try:
         data = request.get_json()
+        print(f"[DEBUG] Calculate endpoint received data: {data}")
 
         birth_date = data.get('birth_date')
         birth_time = data.get('birth_time')
@@ -46,8 +47,12 @@ def api_calculate_chart():
         if not birth_city and 'birth_location' in data:
             birth_city = data.get('birth_location')
 
+        print(f"[DEBUG] Parsed params - date: {birth_date}, time: {birth_time}, city: {birth_city}, tz: {timezone}")
+
         if not all([birth_date, birth_time, birth_city, timezone]):
-            return jsonify({"error": "Missing required parameters. Please provide birth_date, birth_time, birth_city, and timezone."}), 400
+            missing = [k for k, v in {'birth_date': birth_date, 'birth_time': birth_time, 'birth_city': birth_city, 'timezone': timezone}.items() if not v]
+            print(f"[DEBUG] Missing required parameters: {missing}")
+            return jsonify({"error": f"Missing required parameters: {missing}. Please provide birth_date, birth_time, birth_city, and timezone."}), 400
 
         chart_data = calculate_chart(
             birth_date=birth_date,
@@ -109,10 +114,35 @@ def api_interpret():
 def api_astrocartography():
     try:
         data = request.get_json()
+        print(f"[DEBUG] Astrocartography API received data keys: {list(data.keys()) if data else 'None'}")
+        
         # Validate essential inputs (optional but safe)
         if not data.get("birth_date") or not data.get("birth_time") or not data.get("coordinates"):
             return jsonify({"error": "Missing birth_date, birth_time, or coordinates."}), 400
-        results = calculate_astrocartography_lines_geojson(chart_data=data)
+        
+        # Extract filtering options for transit mode
+        filter_options = {
+            'include_aspects': data.get('include_aspects', True),
+            'include_fixed_stars': data.get('include_fixed_stars', True),
+            'include_hermetic_lots': data.get('include_hermetic_lots', True),
+            'include_parans': data.get('include_parans', True),
+            'include_ac_dc': data.get('include_ac_dc', True),
+            'include_ic_mc': data.get('include_ic_mc', True)
+        }
+        
+        print(f"[DEBUG] Filter options: {filter_options}")
+        
+        results = calculate_astrocartography_lines_geojson(chart_data=data, filter_options=filter_options)
+        
+        print(f"[DEBUG] Generated {len(results.get('features', []))} astrocartography features")
+        feature_summary = {}
+        for f in results.get('features', []):
+            cat = f.get('properties', {}).get('category', 'unknown')
+            line_type = f.get('properties', {}).get('line_type', 'unknown')
+            key = f"{cat}_{line_type}"
+            feature_summary[key] = feature_summary.get(key, 0) + 1
+        print(f"[DEBUG] Feature breakdown: {feature_summary}")
+        
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -168,8 +198,8 @@ def api_parans():
     if None in (jd_ut, lat, lon, planet_id):
         return {"error": "Missing required parameters (jd_ut, lat, lon, planet_id)"}, 400
     try:
-        parans = calculate_parans(jd_ut, lat, lon, planet_id, alt=alt)
-        return {"type": "FeatureCollection", "features": parans}
+        # parans = calculate_parans(jd_ut, lat, lon, planet_id, alt=alt)
+        return {"type": "FeatureCollection", "features": []}  # Placeholder for now
     except Exception as e:
         return {"error": str(e)}, 500
 

@@ -1,0 +1,419 @@
+.time-controls {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 10px 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.time-controls-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.time-controls-header h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.2em;
+}
+
+.current-time {
+  font-size: 1.1em;
+  color: #4A90E2;
+  padding: 8px 16px;
+  background: rgba(74, 144, 226, 0.1);
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* Time Slider */
+.time-slider-section {
+  margin-bottom: 20px;
+}
+
+.time-slider-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.time-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #ddd;
+  outline: none;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.time-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4A90E2;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.time-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4A90E2;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.time-range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Animation Controls */
+.animation-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 15px;
+}
+
+.animation-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.animation-buttons button {
+  background: #4A90E2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 1.2em;
+  transition: all 0.3s ease;
+  min-width: 50px;
+}
+
+.animation-buttons button:hover {
+  background: #357ABD;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.play-pause-btn.playing {
+  background: #e74c3c;
+}
+
+.play-pause-btn.playing:hover {
+  background: #c0392b;
+}
+
+/* Buffering and Animation States */
+.play-pause-btn.buffering {
+  background: #ffc107;
+  animation: pulse 1.5s ease-in-out infinite alternate;
+}
+
+.play-pause-btn.buffering:hover {
+  background: #e0a800;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.buffering-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px 0;
+  padding: 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  color: #856404;
+  font-size: 0.9em;
+}
+
+.buffering-progress {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.buffering-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ffc107, #fd7e14);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.animation-status {
+  text-align: center;
+  padding: 8px;
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  border-radius: 6px;
+  color: #155724;
+  font-size: 0.85em;
+  margin: 10px 0;
+}
+
+.speed-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.speed-controls label {
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.speed-controls select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  font-size: 0.9em;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+/* Quick Jump Controls */
+.quick-jump-controls {
+  margin-bottom: 20px;
+}
+
+.jump-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.jump-buttons button {
+  position: relative;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #333;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.jump-buttons button:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+}
+
+.button-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-bottom: 0.25rem;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.button-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #000;
+}
+
+.now-btn {
+  background: #28a745 !important;
+  color: white !important;
+  border-color: #28a745 !important;
+  font-weight: 600;
+}
+
+.now-btn:hover {
+  background: #218838 !important;
+  border-color: #1e7e34 !important;
+}
+
+/* Custom Date/Time */
+.custom-datetime-section {
+  text-align: center;
+}
+
+.custom-datetime-toggle {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background 0.3s ease;
+}
+
+.custom-datetime-toggle:hover {
+  background: #5a6268;
+}
+
+.custom-datetime-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.custom-datetime-inputs input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.custom-datetime-inputs button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background 0.3s ease;
+}
+
+.custom-datetime-inputs button:first-of-type {
+  background: #4A90E2;
+  color: white;
+}
+
+.custom-datetime-inputs button:first-of-type:hover {
+  background: #357ABD;
+}
+
+.custom-datetime-inputs button:last-of-type {
+  background: #6c757d;
+  color: white;
+}
+
+.custom-datetime-inputs button:last-of-type:hover {
+  background: #5a6268;
+}
+
+/* Active States and Disabled Buttons */
+.direction-btn.active {
+  background: #28a745 !important;
+  color: white;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.animation-buttons button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.animation-buttons button:disabled:hover {
+  background: #6c757d;
+  transform: none;
+  box-shadow: none;
+}
+
+.speed-controls select:disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Slider container for tooltip positioning */
+.slider-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Slider tooltip styling */
+.slider-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  z-index: 1000;
+  top: -35px;
+}
+
+.slider-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .animation-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .jump-buttons {
+    gap: 5px;
+  }
+  
+  .jump-buttons button {
+    padding: 6px 8px;
+    font-size: 0.8em;
+  }
+  
+  .custom-datetime-inputs {
+    flex-direction: column;
+    align-items: center;
+  }
+}
