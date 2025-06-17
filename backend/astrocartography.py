@@ -79,92 +79,91 @@ def generate_all_astrocartography_features(chart_data: Dict, filter_options: Dic
         if "lots" in chart_data and chart_data["lots"]:
             lots = chart_data["lots"]
         elif ascendant_long is not None:
-            lots = calculate_hermetic_lots(chart_data)        # --- Planet/asteroid lines (Swiss Ephemeris powered) ---
+            lots = calculate_hermetic_lots(chart_data)        # --- Planet/asteroid/lot lines (Swiss Ephemeris powered) ---
         for planet in planets:
             pname = planet.get("name")
             pid = planet.get("id")
-            try:
-                ppos, _ = swe.calc_ut(jd, pid, swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
-                ra_planet = ppos[0]
-            except Exception as e:
-                print(f"Swiss Ephemeris error for planet {pname}: {e}")
+            body_type = planet.get("body_type", "planet")            # Skip nodes for CCG layers
+            layer_type = filter_options.get("layer_type")
+            if layer_type == "CCG" and pname in ["Lunar Node"]:
                 continue
-            
+                
+            # Check if this is a CCG or transit planet and append suffix to the name ONLY for overlay layers
+            display_name = pname
+            if layer_type == "CCG":
+                display_name = f"{pname} CCG"
+            elif layer_type == "transit":
+                display_name = f"{pname} Transit"
+                
+            # For CCG layers or planets/lots with pre-calculated RA, use those coordinates
+            if (layer_type == "CCG" and "ra" in planet) or (planet.get("data_type") in ["progressed", "transit"] and "ra" in planet):
+                ra_planet = planet.get("ra")
+                print(f"[DEBUG] Using pre-calculated RA for {pname} ({planet.get('data_type', 'unknown')}): {ra_planet}")
+            elif body_type == "lot":
+                # Hermetic Lots: use ecliptic longitude as RA for angular lines
+                ra_planet = planet.get("longitude")
+            elif pname == "Lunar Node":
+                # Lunar Node: use ecliptic longitude directly for RA (never call Swiss Ephemeris)
+                ra_planet = planet.get("longitude")
+                print(f"[DEBUG] Using ecliptic longitude as RA for Lunar Node: {ra_planet}")
+            else:
+                # Use Swiss Ephemeris for natal planets or fallback
+                try:
+                    ppos, _ = swe.calc_ut(jd, pid, swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
+                    ra_planet = ppos[0]
+                    print(f"[DEBUG] Calculated RA for {pname}: {ra_planet}")
+                except Exception as e:
+                    print(f"Swiss Ephemeris error for planet {pname}: {e}")
+                    continue
             # MC line (only if IC/MC lines are enabled)
             if filter_options.get('include_ic_mc', True):
-                mc_feature = calculate_mc_line(jd, ra_planet, pname)
+                mc_feature = calculate_mc_line(jd, ra_planet, display_name)
                 if mc_feature:
-                    mc_feature["properties"]["category"] = "planet"
+                    mc_feature["properties"]["category"] = body_type
                     mc_feature["properties"]["line_type"] = "MC"
+                    mc_feature["properties"]["body"] = pname
+                    mc_feature["properties"]["body_key"] = planet.get("id")
+                    mc_feature["properties"]["data_type"] = planet.get("data_type")
+                    mc_feature["properties"]["layer"] = layer_type or "natal"
                     features.append(mc_feature)
-            
             # IC line (only if IC/MC lines are enabled)
             if filter_options.get('include_ic_mc', True):
-                ic_feature = calculate_ic_line(jd, ra_planet, pname)
+                ic_feature = calculate_ic_line(jd, ra_planet, display_name)
                 if ic_feature:
-                    ic_feature["properties"]["category"] = "planet"
+                    ic_feature["properties"]["category"] = body_type
                     ic_feature["properties"]["line_type"] = "IC"
-                    features.append(ic_feature)        # --- South Node MC/IC lines (calculated from North Node) ---
-        if filter_options.get('include_ic_mc', True):
-            for planet in planets:
-                if planet.get("name") == "North Node":
-                    ra_north = None
-                    try:
-                        ppos, _ = swe.calc_ut(jd, planet.get("id"), swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
-                        ra_north = ppos[0]
-                    except Exception:
-                        continue
-                    if ra_north is not None:
-                        # Calculate MC longitude for North Node
-                        gmst = swe.sidtime(jd) * 15.0
-                        mc_long_north = (ra_north - gmst) % 360.0
-                        if mc_long_north > 180:
-                            mc_long_north -= 360
-                        # Calculate MC longitude for South Node (opposite)
-                        mc_long_south = (mc_long_north + 180.0)
-                        if mc_long_south > 180:
-                            mc_long_south -= 360
-                        # MC line for South Node
-                        mc_feature = {
-                            "type": "Feature",
-                            "geometry": {
-                                "type": "LineString",
-                                "coordinates": [[mc_long_south, -85], [mc_long_south, 85]]
-                            },
-                            "properties": {
-                                "planet": "South Node",
-                                "planet_id": 100,  # Assign unique ID for South Node
-                                "category": "planet",
-                                "line_type": "MC"
-                            }
-                        }
-                        features.append(mc_feature)
-                        # IC line for South Node (opposite MC)
-                        ic_long_south = (mc_long_south + 180.0)
-                        if ic_long_south > 180:
-                            ic_long_south -= 360
-                        ic_feature = {
-                            "type": "Feature",
-                            "geometry": {
-                                "type": "LineString",
-                                "coordinates": [[ic_long_south, -85], [ic_long_south, 85]]
-                            },
-                            "properties": {
-                                "planet": "South Node",
-                                "planet_id": 100,  # Assign unique ID for South Node
-                                "category": "planet",
-                                "line_type": "IC"
-                            }
-                        }
-                        features.append(ic_feature)        # --- AC/DC lines (spline-based, all planets, once per chart) ---
+                    ic_feature["properties"]["body"] = pname
+                    ic_feature["properties"]["body_key"] = planet.get("id")
+                    ic_feature["properties"]["data_type"] = planet.get("data_type")
+                    ic_feature["properties"]["layer"] = layer_type or "natal"
+                    features.append(ic_feature)
+
+        # --- AC/DC lines (spline-based, all planets, once per chart) ---
         if filter_options.get('include_ac_dc', True):
             # Use dense sampling for horizon lines
             acdc_settings = {"density": 300, "lat_steps": np.arange(-85, 85.01, 0.5)}
             acdc_segments_for_parans = []
             try:
-                acdc_features = generate_horizon_lines(chart_data, settings=acdc_settings)
+                # Filter chart data for CCG to exclude nodes
+                filtered_chart_data = chart_data.copy() if chart_data else {}
+                if layer_type == "CCG" and "planets" in filtered_chart_data:
+                    filtered_planets = [p for p in filtered_chart_data["planets"] 
+                                      if p.get("name") not in ["Lunar Node"]]
+                    filtered_chart_data["planets"] = filtered_planets
+                    print(f"[DEBUG] Filtered planets for CCG AC/DC: {[p.get('name') for p in filtered_planets]}")
+                
+                acdc_features = generate_horizon_lines(filtered_chart_data, settings=acdc_settings)
                 for f in acdc_features:
                     f["properties"]["category"] = "planet"
+                    # Apply overlay naming if this is an overlay layer
+                    if layer_type == "CCG":
+                        planet_name = f["properties"].get("planet")
+                        if planet_name and not planet_name.endswith(" CCG"):
+                            f["properties"]["planet"] = f"{planet_name} CCG"
+                    elif layer_type == "transit":
+                        planet_name = f["properties"].get("planet")
+                        if planet_name and not planet_name.endswith(" Transit"):
+                            f["properties"]["planet"] = f"{planet_name} Transit"
                     # Keep HORIZON features for display
                     features.append(f)
                     # Split HORIZON feature into AC and DC features for parans only
@@ -259,9 +258,18 @@ def generate_all_astrocartography_features(chart_data: Dict, filter_options: Dic
                 print(f"[ERROR] Parans generation error: {err}")
                 import traceback
                 traceback.print_exc()
+          # --- Ensure all overlay features are labeled with their layer type ---
+        layer_type = filter_options.get('layer_type')
+        if layer_type in ['CCG', 'transit']:
+            for f in features:
+                if 'properties' in f:
+                    f['properties']['layer'] = layer_type
+        
+        # --- END: Force layer tag on all overlay features ---
         return features
     except Exception as e:
         print("Astrocartography backend error:", e)
+        import traceback
         traceback.print_exc()
         return []
 
@@ -277,15 +285,22 @@ def calculate_astrocartography_lines_geojson(chart_data: Dict, filter_options: D
         filter_options = {
             'include_aspects': True,
             'include_fixed_stars': True,
-            'include_hermetic_lots': True,
-            'include_parans': True,
+            'include_hermetic_lots': True,            'include_parans': True,
             'include_ac_dc': True,
             'include_ic_mc': True
         }
+        
+    features = generate_all_astrocartography_features(chart_data, filter_options)
+    
+    # Ensure all features have layer_type property set
+    layer_type = filter_options.get('layer_type', 'natal')
+    for feature in features:
+        if 'layer_type' not in feature.get('properties', {}):
+            feature['properties']['layer_type'] = layer_type
     
     return {
         "type": "FeatureCollection",
-        "features": generate_all_astrocartography_features(chart_data, filter_options)
+        "features": features
     }
 
 # PATCH: Allow running as script by fixing imports if needed

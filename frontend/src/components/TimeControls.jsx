@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './TimeControls.css';
 
-const TimeControls = ({ timeManager, onTimeChange, onPlayAnimation }) => {
+const TimeControls = ({ timeManager, onTimeChange }) => {
   const [currentTime, setCurrentTime] = useState(timeManager.getCurrentTime());
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(false);
-  const [bufferProgress, setBufferProgress] = useState(0);
-  const [animationSpeed, setAnimationSpeed] = useState(1);  const [animationDirection, setAnimationDirection] = useState(1);
   const [sliderPosition, setSliderPosition] = useState(0);
   
   // Hover tooltip state
   const [hoveredButton, setHoveredButton] = useState(null);
   const [sliderHover, setSliderHover] = useState({ show: false, x: 0, date: '' });
-  // Animation speed presets (simplified for buffered animation)
-  const speedPresets = [
-    { label: '1 Day (48 frames)', value: 1, description: '1 day in 30-min intervals' },
-    { label: '12 Hours (24 frames)', value: 0.5, description: '12 hours in 30-min intervals' },
-    { label: '6 Hours (12 frames)', value: 0.25, description: '6 hours in 30-min intervals' }
-  ];
+  
   // Subscribe to time manager changes
   useEffect(() => {
     const unsubscribe = timeManager.addListener((event, data) => {
@@ -27,21 +18,6 @@ const TimeControls = ({ timeManager, onTimeChange, onPlayAnimation }) => {
         if (onTimeChange) {
           onTimeChange(data);
         }
-      } else if (event === 'animationStarted') {
-        setIsAnimating(true);
-      } else if (event === 'animationStopped') {
-        setIsAnimating(false);
-      } else if (event === 'bufferingStarted') {
-        setIsBuffering(true);
-        setBufferProgress(0);      } else if (event === 'bufferingProgress') {
-        setBufferProgress(data.progress);
-        console.log(`Buffering frame ${data.currentFrame}/${data.frameCount}`);
-      } else if (event === 'bufferingComplete') {
-        setIsBuffering(false);
-        setBufferProgress(100);
-      } else if (event === 'bufferingError') {
-        setIsBuffering(false);
-        console.error('Buffering error:', data.error);
       }
     });
 
@@ -51,6 +27,7 @@ const TimeControls = ({ timeManager, onTimeChange, onPlayAnimation }) => {
 
     return unsubscribe;
   }, [timeManager, onTimeChange]);
+  
   const handleSliderChange = (e) => {
     const position = parseFloat(e.target.value);
     setSliderPosition(position);
@@ -74,7 +51,7 @@ const TimeControls = ({ timeManager, onTimeChange, onPlayAnimation }) => {
       date: targetTime.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric', 
-        year: 'numeric',
+        year: 'numeric' ,
         hour: 'numeric',
         minute: '2-digit'
       })
@@ -83,37 +60,7 @@ const TimeControls = ({ timeManager, onTimeChange, onPlayAnimation }) => {
 
   const handleSliderMouseLeave = () => {
     setSliderHover({ show: false, x: 0, date: '' });
-  };  const handlePlayPause = async () => {
-    if (isAnimating) {
-      // Stop animation
-      timeManager.stopAnimation();
-    } else {
-      // Always use the new buffered animation system
-      if (onPlayAnimation) {
-        try {
-          console.log('Starting buffered animation...');
-          // Update frame count based on selected speed
-          timeManager.setAnimationSpeed(animationSpeed);
-          // Start buffered animation
-          await onPlayAnimation();
-        } catch (error) {
-          console.error('Buffered animation failed:', error);
-        }
-      } else {
-        console.error('onPlayAnimation callback not provided');
-      }
-    }
-  };
-
-  const handleSpeedChange = (speed) => {
-    setAnimationSpeed(speed);
-    timeManager.setAnimationSpeed(speed);
-  };
-
-  const handleDirectionChange = (direction) => {
-    setAnimationDirection(direction);
-    timeManager.setAnimationDirection(direction);
-  };
+  };  
 
   const handleJumpToNow = () => {
     timeManager.jumpToNow();
@@ -163,30 +110,11 @@ const TimeControls = ({ timeManager, onTimeChange, onPlayAnimation }) => {
   return (
     <div className="time-controls">
       <div className="time-controls-header">
-        <h3>🕐 Transit Time Controls</h3>
+        <h3>🕐 Time Controls</h3>
         <div className="current-time">
           <strong>{formatted.date} {formatted.time}</strong>
         </div>
-      </div>      {/* Buffering Indicator */}
-      {isBuffering && (
-        <div className="buffering-indicator">
-          <span>🔄 Buffering animation frames ({speedPresets.find(p => p.value === animationSpeed)?.label})...</span>
-          <div className="buffering-progress">
-            <div 
-              className="buffering-progress-bar" 
-              style={{ width: `${bufferProgress}%` }}
-            />
-          </div>
-          <span>{Math.round(bufferProgress)}% complete</span>
-        </div>
-      )}{/* Animation Status */}
-      {isAnimating && !isBuffering && (
-        <div className="animation-status">
-          ▶️ Playing buffered animation (2 FPS, looping continuously)
-          <br />
-          <small>{speedPresets.find(p => p.value === animationSpeed)?.label || `${animationSpeed} days`}</small>
-        </div>
-      )}{/* Time Slider */}
+      </div>{/* Time Slider */}
       <div className="time-slider-section">
         <label>Time Slider</label>
         <div className="slider-container" style={{ position: 'relative' }}>
@@ -227,51 +155,7 @@ const TimeControls = ({ timeManager, onTimeChange, onPlayAnimation }) => {
           <span>{formatDateTime(timeManager.getTimeRange().start).date}</span>
           <span>{formatDateTime(timeManager.getTimeRange().end).date}</span>
         </div>
-      </div>{/* Animation Controls */}
-      <div className="animation-controls">
-        <div className="animation-buttons">
-          <button 
-            onClick={() => handleDirectionChange(-1)}
-            className={`direction-btn ${animationDirection === -1 ? 'active' : ''}`}
-            title="Reverse Direction"
-            disabled={isBuffering}
-          >
-            ⏪
-          </button>
-          
-          <button 
-            onClick={handlePlayPause}
-            className={`play-pause-btn ${isAnimating ? 'playing' : 'paused'} ${isBuffering ? 'buffering' : ''}`}
-            disabled={isBuffering}
-            title={isBuffering ? 'Buffering...' : isAnimating ? 'Pause' : 'Play'}
-          >
-            {isBuffering ? '⏳' : isAnimating ? '⏸️' : '▶️'}
-          </button>
-          
-          <button 
-            onClick={() => handleDirectionChange(1)}
-            className={`direction-btn ${animationDirection === 1 ? 'active' : ''}`}
-            title="Forward Direction"
-            disabled={isBuffering}
-          >
-            ⏩
-          </button>
-        </div>        <div className="speed-controls">
-          <label>Duration:</label>
-          <select 
-            value={animationSpeed} 
-            onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-            disabled={isBuffering}
-            title="Select animation duration and frame count"
-          >
-            {speedPresets.map(preset => (
-              <option key={preset.value} value={preset.value} title={preset.description}>
-                {preset.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>      {/* Quick Jump Controls */}
+      </div>{/* Quick Jump Controls */}
       <div className="quick-jump-controls">
         <div className="jump-buttons">
           <JumpButton days={-365} label="-1 Year" />

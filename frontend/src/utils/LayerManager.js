@@ -113,6 +113,27 @@ class LayerManager {
     const layer = this.layers.get(name);
     return layer ? layer.visible : false;
   }
+  /**
+   * Set sub-layer visibility explicitly
+   * @param {string} layerName - Parent layer name
+   * @param {string} subLayerName - Sub-layer name
+   * @param {boolean} visible - Visibility state
+   */
+  setSubLayerVisible(layerName, subLayerName, visible) {
+    const layer = this.layers.get(layerName);
+    if (layer) {
+      if (!layer.subLayers) {
+        layer.subLayers = {};
+      }
+      layer.subLayers[subLayerName] = visible;
+      this.notifyListeners('subLayerToggled', { 
+        layerName, 
+        subLayerName, 
+        visible 
+      });
+    }
+    return this;
+  }
 
   /**
    * Check if a sub-layer is visible

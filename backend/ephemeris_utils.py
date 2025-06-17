@@ -86,16 +86,16 @@ EXTENDED_PLANETS = {
     swe.URANUS: "Uranus",
     swe.NEPTUNE: "Neptune",
     swe.PLUTO: "Pluto",
-    swe.MEAN_NODE: "North Node",
+    swe.MEAN_NODE: "Lunar Node",
     swe.TRUE_NODE: "True North Node",
-    swe.MEAN_APOG: "Lilith (Mean)",
+    swe.MEAN_APOG: "Black Moon Lilith",
     swe.OSCU_APOG: "Lilith (Osculating)",
     swe.CHIRON: "Chiron",
     swe.PHOLUS: "Pholus",
-    swe.CERES: "Ceres",
-    swe.PALLAS: "Pallas",
-    swe.JUNO: "Juno",
-    swe.VESTA: "Vesta"
+    swe.AST_OFFSET + 1: "Ceres",
+    swe.AST_OFFSET + 2: "Pallas Athena",
+    swe.AST_OFFSET + 3: "Juno",
+    swe.AST_OFFSET + 4: "Vesta"
 }
 
 # Zodiac sign names
@@ -139,7 +139,7 @@ def calculate_extended_planets(jd_ut, use_extended=False):
         swe.AST_OFFSET + 4: "Vesta",
         swe.CHIRON: "Chiron",
         swe.PHOLUS: "Pholus",
-        swe.MEAN_NODE: "North Node",
+        swe.MEAN_NODE: "Lunar Node",
         swe.MEAN_APOG: "Black Moon Lilith"
     }
     
@@ -196,21 +196,38 @@ def calculate_extended_planets(jd_ut, use_extended=False):
                 if "SwissEph file" in str(e) and "not found" in str(e):
                     print(f"Missing asteroid file for {planet_name}. Please add the required .se1 file to the backend/ephe/ folder.")
     
-    # Add South Node as 180° opposite the North Node (never call swe.calc_ut for South Node)
-    north_node = next((p for p in planets if p['name'] == "North Node"), None)
-    if north_node:
-        south_node_long = (north_node['longitude'] + 180) % 360
-        planets.append({
-            'id': 100000,  # Arbitrary unique ID for South Node
-            'name': 'South Node',
-            'longitude': south_node_long,
-            'latitude': -north_node['latitude'],  # Opposite latitude
-            'distance': north_node['distance'],
-            'speed': -north_node['speed'],
-            'sign': ZODIAC_SIGNS[int(south_node_long / 30) % 12],
-            'position': south_node_long % 30,
-            'retrograde': north_node['retrograde'],
-            'note': 'South Node is always 180° from North Node, never calculated with swe.calc_ut.'
-        })
-    
     return planets
+
+def get_positions(jd_ut, ids):
+    """
+    Get planetary positions for the given Julian date and planet IDs.
+    
+    Args:
+        jd_ut (float): Julian day in UT
+        ids (list): List of planet names (e.g., ["Sun", "Moon"])
+        
+    Returns:
+        list: List of dicts with planetary positions including both ecliptic and equatorial coordinates
+    """
+    name_to_id = {v: k for k, v in EXTENDED_PLANETS.items()}
+    positions = []
+    for name in ids:
+        planet_id = name_to_id.get(name)
+        if planet_id is not None:
+            # Get ecliptic coordinates
+            pos, _ = swe.calc_ut(jd_ut, planet_id)
+            # Get equatorial coordinates  
+            pos_eq, _ = swe.calc_ut(jd_ut, planet_id, swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
+            positions.append({
+                "name": name,
+                "id": planet_id,
+                "longitude": pos[0],
+                "latitude": pos[1],
+                "distance": pos[2],
+                "ra": pos_eq[0],  # Right Ascension for astrocartography
+                "dec": pos_eq[1], # Declination for astrocartography
+                "sign": ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", 
+                        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"][int(pos[0] / 30)],
+                "position": pos[0] % 30
+            })
+    return positions

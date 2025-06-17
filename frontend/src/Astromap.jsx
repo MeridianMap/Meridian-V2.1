@@ -1,12 +1,13 @@
-import React from "react";
-import { MapContainer, TileLayer, Polyline, Tooltip, Circle } from "react-leaflet";
+import React, { useEffect } from "react";
+import { MapContainer, TileLayer, Polyline, Tooltip, Circle, useMap } from "react-leaflet";
+import L from "leaflet";
 import "./astromap.css";
 
 // Map of planet colors (fallback)
 const planetColors = {
   "Sun": "gold", "Moon": "silver", "Mercury": "purple", "Venus": "green",
   "Mars": "red", "Jupiter": "orange", "Saturn": "gray", "Uranus": "teal",
-  "Neptune": "blue", "Pluto": "black", "North Node": "brown", "South Node": "darkred"
+  "Neptune": "blue", "Pluto": "black", "Lunar Node": "brown"
 };
 
 // Helper function to get line styling based on layer
@@ -14,14 +15,25 @@ const getLineStyle = (feature) => {
   const planet = feature.properties.planet;
   const baseColor = planetColors[planet] || "magenta";
   const layerName = feature.layerName || 'natal';
-  const layerStyle = feature.layerStyle || {};
-  
-  if (layerName === 'transit') {
-    // All transit lines use the same color, 3px width, 60% opacity
+  const layerStyle = feature.layerStyle || {};    if (layerName === 'transit') {
+    // Distinct style for Transit: vibrant purple/magenta
     return {
-      color: "#4A90E2", // Consistent blue color for all transit lines
+      color: '#e60097', // Bright pink/magenta
       weight: 3,
-      opacity: 0.6
+      opacity: 0.9,
+      dashArray: '6 3', // subtle dashed line
+      lineCap: 'round',
+      zIndex: 500
+    };
+  } else if (layerName === 'CCG') {
+    // Distinct style for CCG: bold blue with dashed lines
+    return {
+      color: '#1A6AFF', // Brighter blue
+      weight: 4,
+      opacity: 0.95,
+      dashArray: '8 6', // dashed
+      lineCap: 'round',
+      zIndex: 1000
     };
   } else {
     // Natal layer (default) - use planet-specific colors
@@ -90,20 +102,27 @@ const AstroMap = ({ data, paransData }) => {
           </pre>
         )}
       </div>
-      */}
-      <MapContainer
+      */}      <MapContainer
         className="leaflet-container"
         center={[0, 0]}
-        zoom={2}
-        minZoom={2}
+        zoom={3}
+        minZoom={3}
+        maxZoom={8}
         scrollWheelZoom={true}
-        worldCopyJump={true}
+        worldCopyJump={false} // Disable infinite panning
+        maxBounds={[[-90, -180], [90, 180]]} // Lock map to world extent
+        maxBoundsViscosity={1.0} // Prevent dragging outside bounds
+        style={{ height: '80vh', width: '100%' }} // Taller, harmonious size
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
           subdomains={["a", "b", "c", "d"]}
           attribution="© OpenStreetMap contributors © CARTO"
-        />        {mergedFeatures.map((feat, idx) => {
+        />
+        
+        {/* Add coordinate grid and distance scale */}
+        <CoordinateGrid />
+        <DistanceScale />{mergedFeatures.map((feat, idx) => {
           // Debug: print all feature properties to understand structure
           if (idx < 5) { // Only log first 5 features to avoid spam
             console.log(`Feature ${idx}:`, {
@@ -115,16 +134,15 @@ const AstroMap = ({ data, paransData }) => {
               all_properties: feat.properties
             });
           }
-          
-          // Debug: print MC/IC line longitudes for North/South Node
-          if ((feat.properties.planet === "North Node" || feat.properties.planet === "South Node") && (feat.properties.line_type === "MC" || feat.properties.line_type === "IC")) {
+            // Debug: print MC/IC line longitudes for Lunar Node
+          if (feat.properties.planet === "Lunar Node" && (feat.properties.line_type === "MC" || feat.properties.line_type === "IC")) {
             const coords = feat.geometry.coordinates;
             const lon = coords[0][0];
             // Enhanced debug: print all coordinates and properties
             console.log(`DEBUG: ${feat.properties.planet} ${feat.properties.line_type} properties:`, feat.properties);
             console.log(`DEBUG: ${feat.properties.planet} ${feat.properties.line_type} coordinates:`, coords);
             console.log(`DEBUG: ${feat.properties.planet} ${feat.properties.line_type} first longitude:`, lon);
-          }          if (feat.geometry.type === "LineString" && (feat.properties.line_type === "MC" || feat.properties.line_type === "IC")) {
+          }if (feat.geometry.type === "LineString" && (feat.properties.line_type === "MC" || feat.properties.line_type === "IC")) {
             // Render MC/IC vertical lines
             const coords = feat.geometry.coordinates;
             const planet = feat.properties.planet;
@@ -397,9 +415,176 @@ const AstroMap = ({ data, paransData }) => {
           }
           return null;
         })}
+        <CoordinateGrid />
+        <DistanceScale />
       </MapContainer>
     </div>
   );
+};
+
+// Custom component for coordinate grid labels
+const CoordinateGrid = () => {
+  const map = useMap();
+  
+  useEffect(() => {
+    const gridControl = L.control({ position: 'topleft' });
+    
+    gridControl.onAdd = function() {
+      const div = L.DomUtil.create('div', 'coordinate-grid-labels');
+      div.style.pointerEvents = 'none';
+      div.style.position = 'absolute';
+      div.style.top = '0';
+      div.style.left = '0';
+      div.style.width = '100%';
+      div.style.height = '100%';
+      div.style.zIndex = '1000';
+      return div;
+    };
+    
+    gridControl.addTo(map);
+    
+    const updateGrid = () => {
+      const container = map.getContainer().querySelector('.coordinate-grid-labels');
+      if (!container) return;
+      
+      // Clear existing labels
+      container.innerHTML = '';
+      
+      const bounds = map.getBounds();
+      const zoom = map.getZoom();
+      
+      // Calculate grid spacing based on zoom level
+      let latSpacing, lonSpacing;
+      if (zoom <= 2) {
+        latSpacing = lonSpacing = 30;
+      } else if (zoom <= 4) {
+        latSpacing = lonSpacing = 15;
+      } else if (zoom <= 6) {
+        latSpacing = lonSpacing = 5;
+      } else {
+        latSpacing = lonSpacing = 1;
+      }
+      
+      // Draw latitude labels (left side)
+      for (let lat = Math.ceil(bounds.getSouth() / latSpacing) * latSpacing; 
+           lat <= bounds.getNorth(); 
+           lat += latSpacing) {
+        if (lat >= -90 && lat <= 90) {
+          const point = map.latLngToContainerPoint([lat, bounds.getWest()]);
+          const label = document.createElement('div');
+          label.className = 'grid-label lat-label';
+          label.textContent = `${lat}°`;
+          label.style.position = 'absolute';
+          label.style.left = '5px';
+          label.style.top = `${point.y - 8}px`;
+          label.style.fontSize = '11px';
+          label.style.color = '#666';
+          label.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+          label.style.padding = '1px 3px';
+          label.style.borderRadius = '2px';
+          label.style.fontFamily = 'monospace';
+          container.appendChild(label);
+        }
+      }
+      
+      // Draw longitude labels (bottom)
+      for (let lon = Math.ceil(bounds.getWest() / lonSpacing) * lonSpacing; 
+           lon <= bounds.getEast(); 
+           lon += lonSpacing) {
+        // Normalize longitude to -180 to 180 range
+        let normalizedLon = ((lon + 180) % 360) - 180;
+        const point = map.latLngToContainerPoint([bounds.getSouth(), lon]);
+        const label = document.createElement('div');
+        label.className = 'grid-label lon-label';
+        label.textContent = `${normalizedLon}°`;
+        label.style.position = 'absolute';
+        label.style.left = `${point.x - 15}px`;
+        label.style.bottom = '5px';
+        label.style.fontSize = '11px';
+        label.style.color = '#666';
+        label.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+        label.style.padding = '1px 3px';
+        label.style.borderRadius = '2px';
+        label.style.fontFamily = 'monospace';
+        container.appendChild(label);
+      }
+    };
+    
+    // Update grid on map events
+    map.on('zoom move zoomend moveend', updateGrid);
+    updateGrid(); // Initial draw
+    
+    return () => {
+      map.off('zoom move zoomend moveend', updateGrid);
+      map.removeControl(gridControl);
+    };
+  }, [map]);
+  
+  return null;
+};
+
+// Custom component for distance scale
+const DistanceScale = () => {
+  const map = useMap();
+  
+  useEffect(() => {
+    const scaleControl = L.control({ position: 'bottomleft' });
+    
+    scaleControl.onAdd = function() {
+      const div = L.DomUtil.create('div', 'distance-scale-control');
+      div.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+      div.style.padding = '5px 8px';
+      div.style.borderRadius = '3px';
+      div.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
+      div.style.fontFamily = 'monospace';
+      div.style.fontSize = '11px';
+      div.style.color = '#333';
+      div.style.border = '1px solid #ccc';
+      div.style.marginBottom = '10px';
+      div.style.marginLeft = '10px';
+      return div;
+    };
+    
+    scaleControl.addTo(map);
+      const updateScale = () => {
+      const container = map.getContainer().querySelector('.distance-scale-control');
+      if (!container) return;
+      
+      // Calculate scale based on map width and zoom level
+      // Get two points 100 pixels apart horizontally
+      const leftPoint = map.containerPointToLatLng([0, map.getSize().y / 2]);
+      const rightPoint = map.containerPointToLatLng([100, map.getSize().y / 2]);
+      
+      // Calculate distance in meters
+      const distance = leftPoint.distanceTo(rightPoint);
+      
+      // Format distance appropriately
+      let scaleText;
+      if (distance >= 1000000) {
+        scaleText = `${Math.round(distance / 1000000)} × 100px = ${Math.round(distance / 10000)} km`;
+      } else if (distance >= 1000) {
+        scaleText = `${Math.round(distance / 1000)} × 100px = ${Math.round(distance / 10)} km`;
+      } else {
+        scaleText = `${Math.round(distance)} × 100px = ${Math.round(distance)} m`;
+      }
+      
+      container.innerHTML = `
+        <div style="border-bottom: 2px solid #333; width: 100px; margin-bottom: 2px;"></div>
+        <div>${scaleText}</div>
+      `;
+    };
+    
+    // Update scale on map events
+    map.on('zoom zoomend move moveend', updateScale);
+    updateScale(); // Initial draw
+    
+    return () => {
+      map.off('zoom zoomend move moveend', updateScale);
+      map.removeControl(scaleControl);
+    };
+  }, [map]);
+  
+  return null;
 };
 
 export default AstroMap;

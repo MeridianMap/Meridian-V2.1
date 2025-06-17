@@ -34,7 +34,9 @@ def api_calculate_chart():
     try:
         data = request.get_json()
         print(f"[DEBUG] Calculate endpoint received data: {data}")
-
+        # Log progressed_date and its type
+        progressed_date = data.get('progressed_date')
+        print(f"[DEBUG] progressed_date: {progressed_date} (type: {type(progressed_date)})")
         birth_date = data.get('birth_date')
         birth_time = data.get('birth_time')
         birth_city = data.get('birth_city')
@@ -43,17 +45,10 @@ def api_calculate_chart():
         timezone = data.get('timezone')
         house_system = data.get('house_system', 'whole_sign')
         use_extended_planets = data.get('use_extended_planets', False)
-
-        if not birth_city and 'birth_location' in data:
-            birth_city = data.get('birth_location')
-
-        print(f"[DEBUG] Parsed params - date: {birth_date}, time: {birth_time}, city: {birth_city}, tz: {timezone}")
-
-        if not all([birth_date, birth_time, birth_city, timezone]):
-            missing = [k for k, v in {'birth_date': birth_date, 'birth_time': birth_time, 'birth_city': birth_city, 'timezone': timezone}.items() if not v]
-            print(f"[DEBUG] Missing required parameters: {missing}")
-            return jsonify({"error": f"Missing required parameters: {missing}. Please provide birth_date, birth_time, birth_city, and timezone."}), 400
-
+        progressed_for = data.get('progressed_for')
+        progression_method = data.get('progression_method', 'secondary')
+        # Defensive: print all incoming params
+        print(f"[DEBUG] Params: birth_date={birth_date}, birth_time={birth_time}, city={birth_city}, tz={timezone}, progressed_for={progressed_for}, progression_method={progression_method}")
         chart_data = calculate_chart(
             birth_date=birth_date,
             birth_time=birth_time,
@@ -62,15 +57,19 @@ def api_calculate_chart():
             birth_country=birth_country,
             timezone=timezone,
             house_system=house_system,
-            use_extended_planets=use_extended_planets
+            use_extended_planets=use_extended_planets,
+            progressed_for=progressed_for,
+            progression_method=progression_method,
+            progressed_date=progressed_date
         )
-
         if "error" in chart_data:
+            print(f"[ERROR] Chart calculation error: {chart_data['error']}")
             return jsonify(chart_data), 400
-
         return jsonify(chart_data)
-
     except Exception as e:
+        import traceback
+        print(f"[EXCEPTION] /api/calculate: {e}")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
@@ -120,14 +119,16 @@ def api_astrocartography():
         if not data.get("birth_date") or not data.get("birth_time") or not data.get("coordinates"):
             return jsonify({"error": "Missing birth_date, birth_time, or coordinates."}), 400
         
-        # Extract filtering options for transit mode
+        # Extract filtering options from nested filter_options or top-level
+        nested_filter_options = data.get('filter_options', {})
         filter_options = {
-            'include_aspects': data.get('include_aspects', True),
-            'include_fixed_stars': data.get('include_fixed_stars', True),
-            'include_hermetic_lots': data.get('include_hermetic_lots', True),
-            'include_parans': data.get('include_parans', True),
-            'include_ac_dc': data.get('include_ac_dc', True),
-            'include_ic_mc': data.get('include_ic_mc', True)
+            'include_aspects': nested_filter_options.get('include_aspects', data.get('include_aspects', True)),
+            'include_fixed_stars': nested_filter_options.get('include_fixed_stars', data.get('include_fixed_stars', True)),
+            'include_hermetic_lots': nested_filter_options.get('include_hermetic_lots', data.get('include_hermetic_lots', True)),
+            'include_parans': nested_filter_options.get('include_parans', data.get('include_parans', True)),
+            'include_ac_dc': nested_filter_options.get('include_ac_dc', data.get('include_ac_dc', True)),
+            'include_ic_mc': nested_filter_options.get('include_ic_mc', data.get('include_ic_mc', True)),
+            'layer_type': nested_filter_options.get('layer_type', data.get('layer_type'))  # Check both nested and top-level
         }
         
         print(f"[DEBUG] Filter options: {filter_options}")
@@ -135,6 +136,14 @@ def api_astrocartography():
         results = calculate_astrocartography_lines_geojson(chart_data=data, filter_options=filter_options)
         
         print(f"[DEBUG] Generated {len(results.get('features', []))} astrocartography features")
+        
+        # Debug: Check layer tagging
+        layer_counts = {}
+        for f in results.get('features', []):
+            layer = f.get('properties', {}).get('layer', 'untagged')
+            layer_counts[layer] = layer_counts.get(layer, 0) + 1
+        print(f"[DEBUG] Layer distribution: {layer_counts}")
+        
         feature_summary = {}
         for f in results.get('features', []):
             cat = f.get('properties', {}).get('category', 'unknown')

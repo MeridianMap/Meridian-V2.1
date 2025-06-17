@@ -1,8 +1,12 @@
 /* Wraps map + legends */
 .astromap-wrapper {
   position: relative;
-  width: 100%;
-  height: 600px;
+  width: 90%;
+  height: 80vh;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Standard Leaflet container sizing */
@@ -43,4 +47,32 @@
 .label {
   font-weight: bold;
   margin-top: 2px;
+}
+
+/* Coordinate grid styling */
+.coordinate-grid-labels {
+  pointer-events: none !important;
+  z-index: 1000;
+}
+
+.grid-label {
+  user-select: none;
+  white-space: nowrap;
+}
+
+.lat-label {
+  transform: translateY(-50%);
+}
+
+.lon-label {
+  transform: translateX(-50%);
+}
+
+/* Distance scale styling */
+.distance-scale-control {
+  font-weight: 500;
+}
+
+.distance-scale-control:hover {
+  background-color: rgba(255, 255, 255, 1) !important;
 }

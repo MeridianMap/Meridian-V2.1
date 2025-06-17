@@ -87,7 +87,7 @@ def _get_planet_positions(chart_data, jd):
     swe_id_map = {
         "Sun": swe.SUN, "Moon": swe.MOON, "Mercury": swe.MERCURY, "Venus": swe.VENUS, "Mars": swe.MARS,
         "Jupiter": swe.JUPITER, "Saturn": swe.SATURN, "Uranus": swe.URANUS, "Neptune": swe.NEPTUNE, "Pluto": swe.PLUTO,
-        "North Node": swe.MEAN_NODE, "South Node": swe.MEAN_NODE, "Ceres": swe.AST_OFFSET + 1, "Pallas Athena": swe.AST_OFFSET + 2,
+        "Lunar Node": swe.MEAN_NODE, "Ceres": swe.AST_OFFSET + 1, "Pallas Athena": swe.AST_OFFSET + 2,
         "Juno": swe.AST_OFFSET + 3, "Vesta": swe.AST_OFFSET + 4, "Chiron": swe.CHIRON, "Pholus": swe.PHOLUS, "Black Moon Lilith": swe.MEAN_APOG,
     }
     positions = {}
@@ -99,13 +99,10 @@ def _get_planet_positions(chart_data, jd):
         # RA (equatorial)
         flags = swe.FLG_SWIEPH | swe.FLG_EQUATORIAL
         ppos_eq, _ = swe.calc_ut(jd, pid, flags)
-        ra_deg = ppos_eq[0]
-        # Ecliptic longitude
+        ra_deg = ppos_eq[0]        # Ecliptic longitude
         ppos_ecl, _ = swe.calc_ut(jd, pid, swe.FLG_SWIEPH)
         ecl_lon = ppos_ecl[0]
-        # South Node: shift ecliptic longitude by 180°
-        if pname == "South Node":
-            ecl_lon = (ecl_lon + 180) % 360
+        # Note: Lunar Node uses direct ecliptic longitude (no modification needed)
         positions[pname] = {"ra": ra_deg, "ecl_lon": ecl_lon}
     return positions
 
@@ -167,143 +164,213 @@ def calculate_aspect_lines(chart_data, debug=False):
                 mc_count += 1
         if debug:
             print(f"[DEBUG] MC aspect lines generated: {mc_count}")
-        # ------------------------------------------------------------------
-        # --- ASC aspect lines ---
-        lat_steps = np.arange(-85, 85.1, 0.1)  # 0.1° steps for finer resolution
+        # ------------------------------------------------------------------        # --- ASC aspect lines ---
+        # Use coarser latitude steps for better performance and stability
+        lat_steps = np.arange(-85, 85.1, 0.5)  # 0.5° steps for better performance
         asc_count = 0
         for pname, pos in planet_pos.items():
             planet_ecl_lon = pos["ecl_lon"]
             for delta in ASPECT_ANGLES + [-a for a in ASPECT_ANGLES]:
-                lons, lats = [], []
-                prev_lon = None
-                for lat in lat_steps:
-                    try:
-                        target_asc = (planet_ecl_lon - delta) % 360
-                        def asc_resid(lon):
-                            try:
-                                # Use whole sign houses ('W') instead of Placidus ('P')
-                                cusps, ascmc = swe.houses_ex(jd_tt, lat, lon, b'W')
-                                asc = ascmc[0]
-                                diff = (asc - target_asc + 540) % 360 - 180
-                                return diff
-                            except Exception as err:
-                                if debug:
-                                    print(f"[ERR] swe.houses_ex failed: lat={lat}, lon={lon}, err={err}")
-                                raise
-                        # Use previous longitude as bracket if available
-                        if prev_lon is not None:
-                            lon_left = prev_lon - 5
-                            lon_right = prev_lon + 5
-                            lon_left = max(-180, lon_left)
-                            lon_right = min(180, lon_right)
-                        else:
-                            lon_left, lon_right = -180, 180
-                        found = False
-                        try:
-                            f_left = asc_resid(lon_left)
-                            f_right = asc_resid(lon_right)
-                        except Exception:
-                            prev_lon = None
-                            continue
-                        if f_left * f_right > 0:
-                            # Try full bracket if local bracket fails
-                            lon_left, lon_right = -180, 180
-                            try:
-                                f_left = asc_resid(lon_left)
-                                f_right = asc_resid(lon_right)
-                            except Exception:
-                                prev_lon = None
-                                continue
-                        if f_left * f_right > 0:
-                            # Fallback: grid search for minimum
-                            grid = np.linspace(-180, 180, 73)
-                            vals = []
-                            for test_lon in grid:
-                                try:
-                                    v = abs(asc_resid(test_lon))
-                                except Exception:
-                                    v = np.inf
-                                vals.append(v)
-                            min_idx = np.argmin(vals)
-                            if vals[min_idx] < 1.0:
-                                root = grid[min_idx]
-                                found = True
-                            else:
-                                prev_lon = None
-                                continue
-                        if not found:
-                            for _ in range(20):
-                                mid = 0.5 * (lon_left + lon_right)
-                                try:
-                                    f_mid = asc_resid(mid)
-                                except Exception:
-                                    prev_lon = None
-                                    break
-                                if abs(f_mid) < 1e-3:
-                                    root = mid
-                                    found = True
-                                    break
-                                if f_left * f_mid < 0:
-                                    lon_right = mid
-                                    f_right = f_mid
-                                else:
-                                    lon_left = mid
-                                    f_left = f_mid
-                            else:
-                                root = 0.5 * (lon_left + lon_right)
-                                found = True
-                        if found:
-                            root = _normalize_lon(root)
-                            lons.append(root)
-                            lats.append(lat)
-                            prev_lon = root
-                    except Exception as e:
-                        prev_lon = None
-                        if debug:
-                            print(f"[ERR] ASC aspect solve failed: {pname} {ASPECT_LABELS[abs(delta)]} lat={lat:.2f}: {e}")
-                        continue
-                if len(lons) < 2:
-                    if debug:
-                        print(f"[WARN] ASC aspect: {pname} {ASPECT_LABELS[abs(delta)]} insufficient points.")
-                    continue
-                lons, lats = (np.array(lons), np.array(lats))
-                # Sort by latitude for AC aspect lines
-                idx = np.argsort(lats)
-                lons, lats = lons[idx], lats[idx]
-                # Unwrap longitude sequence for continuity
-                lons_unwrapped = np.degrees(np.unwrap(np.radians(lons)))
-                lons_s, lats_s = parametric_spline(lons_unwrapped, lats, density=300)
-                # Already wrapped to [-180, 180] by parametric_spline
-                coords = list(zip(lons_s, lats_s))
-                # Split at dateline
-                segments = split_dateline(coords)
-                # Discard segments with large longitude jumps (to avoid horizontal artifacts)
-                cleaned_segments = []
-                for seg in segments:
-                    if all(abs(a[0] - b[0]) <= 90 for a, b in zip(seg, seg[1:])):
-                        cleaned_segments.append(seg)
-                for seg in cleaned_segments:
-                    feat = {
-                        "type": "Feature",
-                        "geometry": {"type": "LineString", "coordinates": seg},
-                        "properties": {
-                            "planet": pname,
-                            "line_type": "ASPECT",
-                            "angle": abs(delta),
-                            "to": "ASC",
-                            "label": _aspect_label(pname, delta, "ASC")
-                        }
-                    }
+                target_asc = (planet_ecl_lon - delta) % 360
+                
+                # Generate aspect line using simplified approach
+                feat = _generate_asc_aspect_line(pname, target_asc, delta, jd_tt, lat_steps, debug)
+                if feat is not None:
                     features.append(feat)
                     asc_count += 1
-                if debug and lons.size and lats.size:
-                    print(f"[DEBUG] ASC {pname} {ASPECT_LABELS[abs(delta)]} points: {len(lons)}")
+                    if debug:
+                        coords_count = (len(feat["geometry"]["coordinates"]) 
+                                      if feat["geometry"]["type"] == "LineString" 
+                                      else sum(len(seg) for seg in feat["geometry"]["coordinates"]))
+                        print(f"[DEBUG] ASC {pname} {ASPECT_LABELS[abs(delta)]} generated with {coords_count} points")
+                elif debug:
+                    print(f"[WARN] ASC aspect: {pname} {ASPECT_LABELS[abs(delta)]} failed to generate")
         if debug:
             print(f"[DEBUG] ASC aspect lines generated: {asc_count}")
             print(f"[DEBUG] Total features generated: {len(features)}")
     except Exception as e:
         print(f"[ERR] Aspect line generation failed: {e}")
     return features
+
+def _wrap_longitude(lon):
+    """
+    Wrap longitude to [-180, 180] range using the same formula as horizon lines.
+    This ensures consistent wrapping behavior across all line types.
+    """
+    return ((lon + 180) % 360) - 180
+
+def _generate_asc_aspect_line(planet_name, target_asc_ecl_lon, delta_angle, jd_tt, lat_steps, debug=False):
+    """
+    Generate a single ASC aspect line using the proven approach from line_ac_dc.py.
+    Returns a GeoJSON Feature or None if generation fails.
+    
+    Args:
+        planet_name: Name of the planet
+        target_asc_ecl_lon: Target ecliptic longitude for the ASC aspect (degrees)
+        delta_angle: Aspect angle (+/-60, +/-90, +/-120)
+        jd_tt: Julian day in TT
+        lat_steps: Array of latitude values to compute
+        debug: Whether to print debug info
+    """
+    try:
+        lons = []
+        lats = []
+        prev_lon = None
+          # Use efficient bisection method for each latitude
+        for lat in lat_steps:
+            try:
+                def asc_residual(lon):
+                    """Calculate residual for ASC ecliptic longitude at given lat/lon"""
+                    try:
+                        # Use Placidus houses for accurate ASC calculation
+                        cusps, ascmc = swe.houses_ex(jd_tt, lat, lon, b'P')
+                        asc_ecl_lon = ascmc[0]  # ASC ecliptic longitude
+                        
+                        # Apply the same longitude wrapping as horizon lines for consistency
+                        asc_ecl_lon = _wrap_longitude(asc_ecl_lon)
+                        target_wrapped = _wrap_longitude(target_asc_ecl_lon)
+                          # Calculate difference with proper wrapping
+                        diff = asc_ecl_lon - target_wrapped
+                        # Wrap difference to [-180, 180] range
+                        diff = _wrap_longitude(diff)
+                        
+                        return diff
+                    except Exception:
+                        return np.inf
+                
+                # Smart bracketing based on previous solution
+                if prev_lon is not None:
+                    # Use narrow bracket around previous solution
+                    bracket_width = 10  # degrees
+                    lon_start = prev_lon - bracket_width
+                    lon_end = prev_lon + bracket_width
+                else:
+                    # Full range for first point
+                    lon_start = -180
+                    lon_end = 180
+                
+                # Ensure bracket is in valid range
+                lon_start = max(-180, lon_start)
+                lon_end = min(180, lon_end)
+                
+                # Try bisection method
+                found_solution = False
+                tolerance = 0.01  # 0.01 degree tolerance
+                
+                try:
+                    f_start = asc_residual(lon_start)
+                    f_end = asc_residual(lon_end)
+                    
+                    # Check if we have a sign change (bracket contains root)
+                    if f_start * f_end <= 0 and abs(f_start) < 1000 and abs(f_end) < 1000:
+                        # Bisection method
+                        for _ in range(20):  # Max 20 iterations
+                            lon_mid = 0.5 * (lon_start + lon_end)
+                            f_mid = asc_residual(lon_mid)
+                            
+                            if abs(f_mid) < tolerance:
+                                solution_lon = lon_mid
+                                found_solution = True
+                                break
+                            
+                            if f_start * f_mid < 0:
+                                lon_end = lon_mid
+                                f_end = f_mid
+                            else:
+                                lon_start = lon_mid
+                                f_start = f_mid
+                        
+                        if not found_solution:
+                            solution_lon = 0.5 * (lon_start + lon_end)
+                            found_solution = True
+                
+                except Exception:
+                    pass
+                  # If bisection failed, try grid search
+                if not found_solution:
+                    grid_lons = np.linspace(-180, 180, 73)  # 5-degree steps
+                    residuals = []
+                    
+                    for test_lon in grid_lons:
+                        res = asc_residual(test_lon)
+                        residuals.append(abs(res) if abs(res) < 1000 else 1000)
+                    
+                    min_idx = np.argmin(residuals)
+                    if residuals[min_idx] < 1.0:  # Accept if within 1 degree
+                        solution_lon = grid_lons[min_idx]
+                        found_solution = True
+                
+                if found_solution:
+                    # Apply the same longitude normalization as horizon lines
+                    solution_lon = _wrap_longitude(solution_lon)
+                    lons.append(solution_lon)
+                    lats.append(lat)
+                    prev_lon = solution_lon
+                else:
+                    prev_lon = None
+                    
+            except Exception as e:
+                if debug:
+                    print(f"[ERR] ASC aspect calculation failed at lat={lat:.1f}: {e}")
+                prev_lon = None
+                continue
+        
+        # Check if we have enough points for a meaningful line
+        if len(lons) < 3:
+            if debug:
+                print(f"[WARN] Insufficient points for {planet_name} {ASPECT_LABELS[abs(delta_angle)]}: {len(lons)}")
+            return None        # Convert to arrays and sort by latitude
+        lons = np.array(lons)
+        lats = np.array(lats)
+        idx = np.argsort(lats)
+        lons = lons[idx]
+        lats = lats[idx]
+        
+        # Use the same proven spline approach as horizon lines
+        # Let parametric_spline handle longitude unwrapping internally
+        lons_smooth, lats_smooth = parametric_spline(lons, lats, density=400)
+        
+        # parametric_spline already wraps to [-180, 180], so coords are ready
+        coords = list(zip(lons_smooth, lats_smooth))        # Split at dateline using the EXACT same approach as horizon lines
+        segments = split_dateline(coords)  # Use default max_jump=45 like horizon lines
+        
+        # Use the same validation as horizon lines: just check that dateline split worked
+        try:
+            assert all(abs(a[0]-b[0]) <= 180 for seg in segments for a,b in zip(seg, seg[1:])), "Dateline split failed"
+        except AssertionError:
+            if debug:
+                print(f"[WARN] Dateline split validation failed for {planet_name} {ASPECT_LABELS[abs(delta_angle)]}")
+            return None
+        
+        # Use segments directly like horizon lines (no additional filtering)
+        filtered_segments = [seg for seg in segments if len(seg) >= 2]
+          # Create GeoJSON feature(s)
+        if len(filtered_segments) == 0:
+            if debug:
+                print(f"[WARN] No valid segments after filtering for {planet_name} {ASPECT_LABELS[abs(delta_angle)]}")
+            return None
+        elif len(filtered_segments) == 1:
+            geometry = {"type": "LineString", "coordinates": filtered_segments[0]}
+        else:
+            geometry = {"type": "MultiLineString", "coordinates": filtered_segments}
+        
+        feature = {
+            "type": "Feature",
+            "geometry": geometry,
+            "properties": {
+                "planet": planet_name,
+                "line_type": "ASPECT",
+                "angle": abs(delta_angle),
+                "to": "ASC",
+                "label": _aspect_label(planet_name, delta_angle, "ASC")
+            }
+        }
+        
+        return feature        
+    except Exception as e:
+        if debug:
+            print(f"[ERR] Failed to generate ASC aspect line for {planet_name} {ASPECT_LABELS[abs(delta_angle)]}: {e}")
+        return None
 
 # Set sidereal mode globally (Lahiri ayanamsha as example, can be changed)
 swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)

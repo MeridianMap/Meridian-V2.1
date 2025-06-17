@@ -94,23 +94,19 @@ def generate_horizon_line(chart, planet, lat_steps, density=400):
     segs = [
         {"label": "AC", "start": 0, "end": ac_end},
         {"label": "DC", "start": dc_start, "end": len(coords)-1}
-    ]    # GeoJSON output
+    ]
+    # GeoJSON output
     if len(segments) == 1:
         geometry = {"type": "LineString", "coordinates": segments[0]}
     else:
         geometry = {"type": "MultiLineString", "coordinates": segments}
-    
     feat = {
         "type": "Feature",
         "geometry": geometry,
         "properties": {
             "planet": planet,
             "line_type": "HORIZON",
-            "segments": segs,
-            "ac_dc_indices": {
-                "ac_end": ac_end,
-                "dc_start": dc_start
-            }
+            "segments": segs
         },
     }
     return feat
@@ -140,36 +136,74 @@ def generate_horizon_lines(chart_data, settings=None) -> list:
         "Uranus": swe.URANUS,
         "Neptune": swe.NEPTUNE,
         "Pluto": swe.PLUTO,
-        "North Node": swe.MEAN_NODE,
-        "South Node": swe.MEAN_NODE,
-        "Ceres": swe.AST_OFFSET + 1,
+        "Lunar Node": swe.MEAN_NODE,
+        "Lunar Node": swe.MEAN_NODE,        "Ceres": swe.AST_OFFSET + 1,
         "Pallas Athena": swe.AST_OFFSET + 2,
         "Juno": swe.AST_OFFSET + 3,
         "Vesta": swe.AST_OFFSET + 4,
         "Chiron": swe.CHIRON,
         "Pholus": swe.PHOLUS,
-        "Black Moon Lilith": swe.MEAN_APOG,
-    }
-    # Precompute sidereal time and planet RA/Dec
-    gst = swe.sidtime(jd) * 15.0  # GST in degrees
+        "Black Moon Lilith": swe.MEAN_APOG,}
+    # Precompute planet RA/Dec and individual GST for each planet
     ra_deg = {}
     dec = {}
+    gst_per_planet = {}  # Store GST per planet
+    planet_display_names = {}  # Map original name to display name
+    
     for planet in chart_data["planets"]:
         pname = planet.get("name")
         if pname is not None:
             pname = pname.strip()
+        
+        # Check if this is a progressed planet and create display name
+        display_name = pname
+        if planet.get("data_type") == "progressed":
+            display_name = f"{pname} CCG"
+        planet_display_names[pname] = display_name
+        
         pid = swe_id_map.get(pname)
-        print(f"[DEBUG] Processing planet: '{pname}' (ID: {pid})")
+        print(f"[DEBUG] Processing planet: '{pname}' -> '{display_name}' (ID: {pid})")
         if pid is None:
             print(f"[WARN] Skipping planet '{pname}': not in swe_id_map")
             continue
-        ppos, _ = swe.calc_ut(jd, pid, swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
-        ra_deg[pname] = ppos[0]
-        dec[pname] = ppos[1]
-    chart = {"ra_deg": ra_deg, "dec": dec, "gst_deg": gst}
+        
+        # Determine which JD to use for coordinate system
+        coordinate_jd = planet.get("coordinate_jd", jd)  # Default to birth JD if not specified
+        
+        # Calculate GST for this planet's coordinate system
+        gst_per_planet[pname] = swe.sidtime(coordinate_jd) * 15.0
+        
+        # Use pre-calculated coordinates for all planets (progressed and transit)
+        if "ra" in planet and "dec" in planet:
+            ra_deg[pname] = planet.get("ra")
+            dec[pname] = planet.get("dec")
+            print(f"[DEBUG] Using coordinates for {pname}: RA={planet.get('ra')}, Dec={planet.get('dec')}, GST={gst_per_planet[pname]}")
+        else:
+            # Fallback calculation if coordinates not provided
+            ppos, _ = swe.calc_ut(coordinate_jd, pid, swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
+            ra_deg[pname] = ppos[0]
+            dec[pname] = ppos[1]
+            print(f"[DEBUG] Calculated coordinates for {pname}: RA={ppos[0]}, Dec={ppos[1]}, GST={gst_per_planet[pname]}")
+            
+    # Generate horizon lines for each planet
     for pname in ra_deg:
+        display_name = planet_display_names.get(pname, pname)
+        
+        # Create chart data structure with planet-specific GST
+        chart = {
+            "ra_deg": {pname: ra_deg[pname]}, 
+            "dec": {pname: dec[pname]}, 
+            "gst_deg": gst_per_planet[pname]  # Use planet-specific GST
+        }
+        
         feat = generate_horizon_line(chart, pname, lat_steps, density)
         if feat is not None:
+            # Update the feature to use the display name
+            feat["properties"]["planet"] = display_name
+            # Also copy data_type for frontend filtering
+            planet_data = next((p for p in chart_data["planets"] if p.get("name") == pname), None)
+            if planet_data and planet_data.get("data_type"):
+                feat["properties"]["data_type"] = planet_data.get("data_type")
             features.append(feat)
     print(f"Generated {len(features)} horizon features: {[f['properties']['planet'] for f in features]}")
     return features

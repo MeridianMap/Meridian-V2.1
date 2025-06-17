@@ -99,7 +99,10 @@ def calculate_houses(jd_ut, lat, lon, house_system='whole_sign'):
         })
     return result
 
-def calculate_chart(birth_date, birth_time, birth_city, birth_state="", birth_country="", timezone="", house_system='whole_sign', use_extended_planets=False):
+def calculate_chart(
+    birth_date, birth_time, birth_city, birth_state="", birth_country="", timezone="", house_system='whole_sign', use_extended_planets=False,
+    progressed_for=None, progression_method="secondary", progressed_date=None
+):
     """
     Calculate complete astrological chart by delegating to specialized modules.
     Args:
@@ -111,6 +114,9 @@ def calculate_chart(birth_date, birth_time, birth_city, birth_state="", birth_co
         timezone (str): Timezone string (e.g., "America/New_York")
         house_system (str): House system to use
         use_extended_planets (bool): Whether to use extended planet set including asteroids
+        progressed_for (list, optional): List of planet names to progress (e.g., ["Sun", "Moon"])
+        progression_method (str): Progression method (default: "secondary")
+        progressed_date (str, optional): Custom date for progression (YYYY-MM-DD)
     Returns:
         dict: Complete astrological chart data
     """
@@ -124,11 +130,92 @@ def calculate_chart(birth_date, birth_time, birth_city, birth_state="", birth_co
             return {"error": "Could not convert time to UTC"}
         jd_ut, year, month, day, hour, minute, second = time_data
         houses_data = calculate_houses(jd_ut, lat, lon, house_system)
-        planets_data = calculate_extended_planets(jd_ut, use_extended=use_extended_planets)
+        # --- Progression logic ---
+        planets_data = []
+        progressed_lots = []
+        if progressed_for and progression_method == "secondary":
+            # Use progressed_date if provided, else use today
+            if progressed_date:
+                now = datetime.datetime.strptime(progressed_date, "%Y-%m-%d")
+            else:
+                now = datetime.datetime.utcnow()
+            birth_dt = datetime.datetime(year, month, day, hour, minute, second)
+            age_days = (now - birth_dt).days
+            age_years = age_days / 365.25
+            # Progressed JD: 1 day after birth = 1 year of life
+            jd_prog = jd_ut + age_years
+            
+            # Calculate Julian Day for the transit date using NATAL BIRTH TIME (key for cyclocartography)
+            import swisseph as swe
+            if progressed_date:
+                prog_dt = datetime.datetime.strptime(progressed_date, "%Y-%m-%d")
+            else:
+                prog_dt = datetime.datetime.utcnow()
+            
+            # CRITICAL: Use natal birth time with the target date for cyclocartography
+            # This preserves the natal angular framework (AC/DC/MC/IC) on the new date
+            jd_transit = swe.julday(prog_dt.year, prog_dt.month, prog_dt.day, 
+                                   hour + minute/60.0 + second/3600.0)
+            from backend.ephemeris_utils import get_positions
+            # For CCG, calculate specified planets as progressions
+            planets_data = []
+            progressed_planets = []
+            for name in progressed_for:
+                # Use standard secondary progression for inner planets (1 day = 1 year)
+                pos = get_positions(jd_prog, [name])
+                for p in pos:
+                    p["data_type"] = "progressed"
+                    progressed_planets.append(p)
+                    planets_data.append(p)
+            # Add outer planets and asteroids as transits for the custom date
+            all_planets = ["Sun","Moon","Mercury","Venus","Mars","Jupiter","Saturn","Uranus","Neptune","Pluto","Lunar Node","Chiron","Ceres","Pallas Athena","Juno","Vesta","Black Moon Lilith","Pholus"]
+            transit_planets = [p for p in all_planets if p not in (progressed_for or [])]
+            for p in get_positions(jd_transit, transit_planets):
+                p["data_type"] = "transit"
+                planets_data.append(p)
+            # --- Hermetic Lots for CCG (progressed) ---
+            # Only add if CCG layer is requested (frontend will filter)
+            # Get progressed ASC (from houses_data at jd_prog)
+            houses_prog = calculate_houses(jd_prog, lat, lon, house_system)
+            asc_prog = houses_prog["ascendant"]["longitude"] if "ascendant" in houses_prog else None
+            if asc_prog is not None:
+                lots = calculate_hermetic_lots(progressed_planets + planets_data, asc_prog)
+                for i, lot in enumerate(lots):
+                    lot_obj = {
+                        "id": f"LOT_{i}",
+                        "name": lot["name"],
+                        "longitude": lot["longitude"],
+                        "latitude": 0.0,
+                        "sign": lot["sign"],
+                        "position": lot["position"],
+                        "data_type": "progressed",
+                        "body_type": "lot"
+                    }
+                    planets_data.append(lot_obj)
+        else:
+            # Default: all planets as transits
+            planets_data = calculate_extended_planets(jd_ut, use_extended=use_extended_planets)
+            for p in planets_data:
+                p["data_type"] = "transit"
         aspects_data = calculate_aspects(planets_data)
         ascendant_long = houses_data["ascendant"]["longitude"] if "ascendant" in houses_data else None
-        lots_data = calculate_hermetic_lots(planets_data, ascendant_long) if ascendant_long is not None else []
+        
+        # Calculate lots - skip for progressed charts for now
+        if progressed_for:
+            lots_data = []  # Skip hermetic lots for CCG/progressed charts
+        else:
+            lots_data = calculate_hermetic_lots(planets_data, ascendant_long) if ascendant_long is not None else []
+            # Tag lots with data_type for transit charts
+            for lot in lots_data:
+                lot["data_type"] = "transit"
+        
         fixed_stars_data = get_fixed_star_positions(jd_ut)
+        
+        # For progressed charts, use birth JD for coordinate system to prevent daily shifts
+        # The planets are already calculated with progressed positions, but the coordinate
+        # system should remain anchored to the birth chart
+        chart_jd = jd_ut  # Always use birth JD for coordinate system
+        
         result = {
             "input": {
                 "date": birth_date,
@@ -150,7 +237,7 @@ def calculate_chart(birth_date, birth_time, birth_city, birth_state="", birth_co
                 "hour": hour,
                 "minute": minute,
                 "second": second,
-                "julian_day": jd_ut
+                "julian_day": chart_jd  # Use progressed JD for progressed charts
             },
             "houses": houses_data,
             "planets": planets_data,
