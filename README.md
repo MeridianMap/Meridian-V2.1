@@ -15,6 +15,18 @@ This is an enhanced version of the astrological web application that calculates 
   - Support for extended planet sets including asteroids
   - Improved error handling for more reliable calculations
 
+- **Multiple Astrocartography Layers**:
+  - **Natal Layer**: Traditional birth chart astrocartography with all planetary lines
+  - **Transit Layer**: Current planetary transits overlaid on the map
+  - **CCG (Conceptional Continual Gestation) Layer**: Alternative calculation method
+  - **Human Design Layer**: Design chart calculated using the 88° solar-arc method
+
+- **Human Design Integration**:
+  - Automatic calculation of Design datetime (88° solar-arc before birth)
+  - Full feature generation including planet lines, aspects, parans, and hermetic lots
+  - Separate toggle controls for Human Design features
+  - Redis caching support for improved performance
+
 - **Additional Enhancements**:
   - Timezone auto-detection based on selected location
   - Chart saving/loading functionality
@@ -62,6 +74,7 @@ npm run dev
 ## API Endpoints
 
 - `/api/calculate` - Calculate astrological chart
+- `/api/astrocartography` - Generate astrocartography features (supports layer_type: 'natal', 'transit', 'CCG', 'HD_DESIGN')
 - `/api/house-systems` - Get available house systems
 - `/api/timezones` - Get available timezones
 - `/api/location-suggestions` - Get location suggestions based on query

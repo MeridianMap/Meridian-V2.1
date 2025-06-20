@@ -88,15 +88,16 @@ def generate_all_astrocartography_features(chart_data: Dict, filter_options: Dic
             if layer_type == "CCG" and pname in ["Lunar Node"]:
                 continue
                 
-            # Check if this is a CCG or transit planet and append suffix to the name ONLY for overlay layers
+            # Check if this is a CCG, transit, or HD planet and append suffix to the name ONLY for overlay layers
             display_name = pname
             if layer_type == "CCG":
                 display_name = f"{pname} CCG"
             elif layer_type == "transit":
                 display_name = f"{pname} Transit"
-                
-            # For CCG layers or planets/lots with pre-calculated RA, use those coordinates
-            if (layer_type == "CCG" and "ra" in planet) or (planet.get("data_type") in ["progressed", "transit"] and "ra" in planet):
+            elif layer_type == "HD_DESIGN":
+                display_name = f"{pname} HD"
+                  # For CCG layers or planets/lots with pre-calculated RA, use those coordinates
+            if (layer_type == "CCG" and "ra" in planet) or (planet.get("data_type") in ["progressed", "transit", "hd_design"] and "ra" in planet):
                 ra_planet = planet.get("ra")
                 print(f"[DEBUG] Using pre-calculated RA for {pname} ({planet.get('data_type', 'unknown')}): {ra_planet}")
             elif body_type == "lot":
@@ -143,19 +144,17 @@ def generate_all_astrocartography_features(chart_data: Dict, filter_options: Dic
             # Use dense sampling for horizon lines
             acdc_settings = {"density": 300, "lat_steps": np.arange(-85, 85.01, 0.5)}
             acdc_segments_for_parans = []
-            try:
-                # Filter chart data for CCG to exclude nodes
+            try:                # Filter chart data for CCG to exclude nodes
                 filtered_chart_data = chart_data.copy() if chart_data else {}
-                if layer_type == "CCG" and "planets" in filtered_chart_data:
+                if layer_type in ["CCG", "HD_DESIGN"] and "planets" in filtered_chart_data:
                     filtered_planets = [p for p in filtered_chart_data["planets"] 
                                       if p.get("name") not in ["Lunar Node"]]
                     filtered_chart_data["planets"] = filtered_planets
-                    print(f"[DEBUG] Filtered planets for CCG AC/DC: {[p.get('name') for p in filtered_planets]}")
+                    print(f"[DEBUG] Filtered planets for {layer_type} AC/DC: {[p.get('name') for p in filtered_planets]}")
                 
                 acdc_features = generate_horizon_lines(filtered_chart_data, settings=acdc_settings)
                 for f in acdc_features:
-                    f["properties"]["category"] = "planet"
-                    # Apply overlay naming if this is an overlay layer
+                    f["properties"]["category"] = "planet"                    # Apply overlay naming if this is an overlay layer
                     if layer_type == "CCG":
                         planet_name = f["properties"].get("planet")
                         if planet_name and not planet_name.endswith(" CCG"):
@@ -164,6 +163,10 @@ def generate_all_astrocartography_features(chart_data: Dict, filter_options: Dic
                         planet_name = f["properties"].get("planet")
                         if planet_name and not planet_name.endswith(" Transit"):
                             f["properties"]["planet"] = f"{planet_name} Transit"
+                    elif layer_type == "HD_DESIGN":
+                        planet_name = f["properties"].get("planet")
+                        if planet_name and not planet_name.endswith(" HD"):
+                            f["properties"]["planet"] = f"{planet_name} HD"
                     # Keep HORIZON features for display
                     features.append(f)
                     # Split HORIZON feature into AC and DC features for parans only
@@ -257,10 +260,9 @@ def generate_all_astrocartography_features(chart_data: Dict, filter_options: Dic
             except Exception as err:
                 print(f"[ERROR] Parans generation error: {err}")
                 import traceback
-                traceback.print_exc()
-          # --- Ensure all overlay features are labeled with their layer type ---
+                traceback.print_exc()          # --- Ensure all overlay features are labeled with their layer type ---
         layer_type = filter_options.get('layer_type')
-        if layer_type in ['CCG', 'transit']:
+        if layer_type in ['CCG', 'transit', 'HD_DESIGN']:
             for f in features:
                 if 'properties' in f:
                     f['properties']['layer'] = layer_type

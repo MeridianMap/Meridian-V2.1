@@ -1,5 +1,3 @@
-
-
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -13,6 +11,11 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Human Design Layer Colors */
+  --hd-line: #D47AFF;
+  --hd-fill: rgba(212, 122, 255, 0.3);
+  --hd-accent: #B947E0;
 }
 
 a {

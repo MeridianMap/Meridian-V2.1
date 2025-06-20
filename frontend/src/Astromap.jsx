@@ -24,8 +24,7 @@ const getLineStyle = (feature) => {
       dashArray: '6 3', // subtle dashed line
       lineCap: 'round',
       zIndex: 500
-    };
-  } else if (layerName === 'CCG') {
+    };  } else if (layerName === 'CCG') {
     // Distinct style for CCG: bold blue with dashed lines
     return {
       color: '#1A6AFF', // Brighter blue
@@ -34,6 +33,16 @@ const getLineStyle = (feature) => {
       dashArray: '8 6', // dashed
       lineCap: 'round',
       zIndex: 1000
+    };
+  } else if (layerName === 'HD_DESIGN') {
+    // Distinct style for Human Design: vibrant purple with solid lines
+    return {
+      color: '#D47AFF', // Purple color matching the controls
+      weight: 3,
+      opacity: 0.85,
+      dashArray: '4 2', // subtle dashed line to distinguish from natal
+      lineCap: 'round',
+      zIndex: 800
     };
   } else {
     // Natal layer (default) - use planet-specific colors

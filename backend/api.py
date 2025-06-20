@@ -24,6 +24,8 @@ from backend.location_utils import get_location_suggestions, detect_timezone_fro
 from backend.interpretation import generate_interpretation  # <-- NEW IMPORT
 from backend.astrocartography import calculate_astrocartography_lines_geojson
 from backend.utils import filter_lines_near_location
+# Import Human Design layer support
+from backend.layers.humandesign import calculate_human_design_layer
 # from backend.parans import calculate_parans
 
 app = Flask(__name__)
@@ -133,24 +135,87 @@ def api_astrocartography():
         
         print(f"[DEBUG] Filter options: {filter_options}")
         
-        results = calculate_astrocartography_lines_geojson(chart_data=data, filter_options=filter_options)
+        # Handle different layer types
+        layer_type = filter_options.get('layer_type')
+        if layer_type == 'HD_DESIGN':
+            # Human Design layer calculation
+            try:
+                
+                # Extract birth data for HD calculation
+                birth_date = data.get('birth_date')
+                birth_time = data.get('birth_time')
+                timezone = data.get('timezone')
+                coordinates = data.get('coordinates', {})
+                
+                # Handle coordinates in multiple formats
+                if isinstance(coordinates, list) and len(coordinates) > 0:
+                    # Could be list of coordinate objects or list of numbers
+                    if isinstance(coordinates[0], dict):
+                        # List of coordinate objects: [{"lat": ..., "lng": ...}]
+                        coord_obj = coordinates[0]
+                        lat = coord_obj.get('lat') or coord_obj.get('latitude')
+                        lon = coord_obj.get('lng') or coord_obj.get('longitude')
+                    elif len(coordinates) >= 2 and isinstance(coordinates[0], (int, float)):
+                        # List of numbers: [lon, lat]
+                        lon, lat = coordinates[0], coordinates[1]
+                    else:
+                        lat, lon = None, None
+                elif isinstance(coordinates, dict):
+                    # Single coordinate dict: {"latitude": ..., "longitude": ...}
+                    lat = coordinates.get('latitude') or coordinates.get('lat')
+                    lon = coordinates.get('longitude') or coordinates.get('lng')
+                else:
+                    lat, lon = None, None
+                
+                print(f"[HD] Coordinates parsed: lat={lat}, lon={lon}")
+                
+                if not all([birth_date, birth_time, timezone, lat is not None, lon is not None]):
+                    missing = []
+                    if not birth_date: missing.append("birth_date")
+                    if not birth_time: missing.append("birth_time") 
+                    if not timezone: missing.append("timezone")
+                    if lat is None: missing.append("latitude")
+                    if lon is None: missing.append("longitude")
+                    return jsonify({"error": f"Missing required data for Human Design calculation: {missing}"}), 400
+                
+                # Convert birth date/time to datetime
+                import datetime as dt
+                import pytz
+                
+                # Parse date and time
+                if '-' in birth_date:
+                    year, month, day = map(int, birth_date.split('-'))
+                elif '/' in birth_date:
+                    month, day, year = map(int, birth_date.split('/'))
+                else:
+                    return jsonify({"error": "Invalid birth date format"}), 400
+                
+                hour, minute = map(int, birth_time.split(':'))
+                
+                # Create timezone-aware datetime
+                local_tz = pytz.timezone(timezone)
+                birth_dt = local_tz.localize(dt.datetime(year, month, day, hour, minute))
+                
+                # Extract additional options
+                opts = {
+                    'house_system': data.get('house_system', 'whole_sign'),
+                    'use_extended_planets': data.get('use_extended_planets', True)
+                }
+                
+                # Calculate Human Design layer
+                results = calculate_human_design_layer(birth_dt, lat, lon, timezone, filter_options, **opts)
+                
+                print(f"[HD] Generated {len(results.get('features', []))} Human Design features")
+                return jsonify(results)
+                
+            except Exception as e:
+                print(f"[ERROR] Human Design calculation error: {e}")
+                return jsonify({"error": f"Human Design calculation failed: {str(e)}"}), 500
+        else:
+            # Standard astrocartography calculation
+            results = calculate_astrocartography_lines_geojson(chart_data=data, filter_options=filter_options)
         
-        print(f"[DEBUG] Generated {len(results.get('features', []))} astrocartography features")
-        
-        # Debug: Check layer tagging
-        layer_counts = {}
-        for f in results.get('features', []):
-            layer = f.get('properties', {}).get('layer', 'untagged')
-            layer_counts[layer] = layer_counts.get(layer, 0) + 1
-        print(f"[DEBUG] Layer distribution: {layer_counts}")
-        
-        feature_summary = {}
-        for f in results.get('features', []):
-            cat = f.get('properties', {}).get('category', 'unknown')
-            line_type = f.get('properties', {}).get('line_type', 'unknown')
-            key = f"{cat}_{line_type}"
-            feature_summary[key] = feature_summary.get(key, 0) + 1
-        print(f"[DEBUG] Feature breakdown: {feature_summary}")
+        print(f"Generated {len(results.get('features', []))} astrocartography features")
         
         return jsonify(results)
     except Exception as e:
