@@ -1,0 +1,109 @@
+{
+  "planets": {
+    "Sun": "core self, vitality, identity",
+    "Moon": "emotions, instincts, inner world",
+    "Mercury": "thinking, communication, learning",
+    "Venus": "love, beauty, values",
+    "Mars": "drive, action, aggression",
+    "Jupiter": "growth, belief, expansion",
+    "Saturn": "structure, discipline, responsibility",
+    "Uranus": "change, innovation, disruption",
+    "Neptune": "dreams, illusion, transcendence",
+    "Pluto": "power, transformation, regeneration"
+  },
+  "lunarPoints": {
+    "Lunar Node": "destiny path, karmic direction",
+    "Black Moon Lilith": "raw feminine, taboo, shadow, exiled power"
+  },
+  "asteroids": {
+    "Ceres": "nurturing, food, loss and return",
+    "Pallas Athena": "wisdom, strategy, creative intelligence",
+    "Juno": "partnership, devotion, loyalty",
+    "Vesta": "focus, purity, sacred service",
+    "Chiron": "wound, healing, mentorship",
+    "Pholus": "small trigger, big release, unraveling events"
+  },
+  "fixedStars": {
+    "Regulus": "royalty, honor, downfall risk",
+    "Spica": "talent, brilliance, blessings",
+    "Antares": "intensity, power, obsession",
+    "Aldebaran": "integrity, leadership, protection",
+    "Algol": "extremes, danger, primal power",
+    "Sirius": "ambition, fame, excellence",
+    "Vega": "artistry, charisma, creativity",
+    "Altair": "boldness, action, leadership",
+    "Deneb": "wisdom, mysticism, sacrifice",
+    "Capella": "curiosity, independence, inventiveness",
+    "Castor": "duality, storytelling, intellect",
+    "Pollux": "immortality, conflict, mastery",
+    "Procyon": "swift success, instability",
+    "Canopus": "navigation, perspective, legacy",
+    "Bellatrix": "warrior spirit, daring, courage",
+    "Betelgeuse": "command, fame, achievement",
+    "Rigel": "teaching, brilliance, responsibility"
+  },
+  "angles": {
+    "AC": "outer self, first impressions",
+    "DC": "relationships, partners, projection",
+    "MC": "career, legacy, public role",
+    "IC": "roots, home, private life"
+  },
+  "aspects": {
+    "Conjunction": "fusion, merging, intensified energy",
+    "Opposition": "tension, reflection, polarity",
+    "Trine": "flow, harmony, natural support",
+    "Square": "challenge, friction, growth pressure",
+    "Sextile": "opportunity, ease, cooperation"
+  },
+  "aspectLines": {
+    "Sextile MC": "supportive ease in public expression",
+    "Square MC": "friction around reputation or goals",
+    "Trine MC": "natural flow in public identity",
+    "Sextile AC": "social ease, friendly impressions",
+    "Square AC": "inner tension, conflicting expression",
+    "Trine AC": "natural charisma, effortless self-image"
+  },
+  "hermeticLots": {
+    "Lot of Fortune": "material flow, physical embodiment",
+    "Lot of Spirit": "purpose, will, conscious drive",
+    "Lot of Eros": "attraction, love, creative longing",
+    "Lot of Necessity": "what must be, obligation",
+    "Lot of Victory": "achievement, success, recognition",
+    "Lot of Courage": "bravery, bold action, daring",
+    "Lot of Nemesis": "adversity, loss, hidden enemies"
+  },
+  "houses": {
+    "1st": "1st house of identity and appearance",
+    "2nd": "2nd house of resources and values",
+    "3rd": "3rd house of communication and learning",
+    "4th": "4th house of home and family",
+    "5th": "5th house of creativity and pleasure",
+    "6th": "6th house of service and health",
+    "7th": "7th house of relationships and commitment",
+    "8th": "8th house of intimacy and transformation",
+    "9th": "9th house of travel and belief",
+    "10th": "10th house of public role and image",
+    "11th": "11th house of community and vision",
+    "12th": "12th house of dreams and dissolution"
+  },
+  "zodiacSigns": {
+    "Aries": "bold, initiating, driven by instinct",
+    "Taurus": "steady, sensual, values security",
+    "Gemini": "curious, quick, mental explorer",
+    "Cancer": "nurturing, emotional, protective",
+    "Leo": "radiant, expressive, proud leader",
+    "Virgo": "precise, helpful, system-focused",
+    "Libra": "harmonizing, social, beauty-seeking",
+    "Scorpio": "intense, private, deeply transformative",
+    "Sagittarius": "adventurous, wise, truth-seeking",
+    "Capricorn": "structured, ambitious, mastery-oriented",
+    "Aquarius": "innovative, detached, future-minded",
+    "Pisces": "dreamy, spiritual, boundary-blurring"
+  },
+  "layers": {
+    "Natal": "personality",
+    "Transit": "current planets now",
+    "CCG": "cyclocartography, progressed & transit planets",
+    "Human Design": "design chart, 88 degrees pre-natal"
+  }
+}
