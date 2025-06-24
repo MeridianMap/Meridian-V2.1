@@ -3,8 +3,10 @@ import axios from 'axios';
 
 export default function useAstroData(layerManager, forceMapUpdate) {
   const [astroData, setAstroData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchAstro = async (formData, chartData) => {
+    setLoading(true);
     try {
       const payload = {
         birth_date: formData.birth_date,
@@ -26,10 +28,13 @@ export default function useAstroData(layerManager, forceMapUpdate) {
       layerManager.setLayerData('natal', res.data);
       forceMapUpdate();
       return res.data;
-    } catch {
+    } catch (error) {
+      console.error('Astrocartography fetch failed:', error);
       return null;
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { astroData, fetchAstro, setAstroData };
+  return { astroData, fetchAstro, setAstroData, loading };
 }

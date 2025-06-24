@@ -30,25 +30,32 @@ function App() {
   // Initialize managers
   const [layerManager] = useState(() => new LayerManager());
   const [timeManager] = useState(() => new TimeManager());
-  
-  const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
     name: '',
     birth_date: '',
     birth_time: '',
     birth_city: '',
     birth_state: '',
     birth_country: '',
-    timezone: ''
-  })
-  // Replace chart, astro, transit, and CCG state/handlers with hooks
+    timezone: '',
+    house_system: 'whole_sign' // Default house system
+  })  // Replace chart, astro, transit, and CCG state/handlers with hooks
   const { response, loadingStep: chartLoading, error: chartError, fetchChart } = useChartData(timeManager);
-  const { astroData, fetchAstro } = useAstroData(layerManager, forceMapUpdate);
-  const { isTransitEnabled, fetchTransits } = useTransitData(layerManager, forceMapUpdate, timeManager);
-  const { fetchCCG } = useCCGData(layerManager, forceMapUpdate);
-  const { fetchHumanDesign } = useHumanDesignData(layerManager, forceMapUpdate);
+  const { astroData, fetchAstro, loading: astroLoading } = useAstroData(layerManager, forceMapUpdate);
+  const { isTransitEnabled, fetchTransits, loadingStep: transitLoading } = useTransitData(layerManager, forceMapUpdate, timeManager);
+  const { fetchCCG, loadingStep: ccgLoading } = useCCGData(layerManager, forceMapUpdate);
+  const { fetchHumanDesign, loadingStep: hdLoading } = useHumanDesignData(layerManager, forceMapUpdate);
 
-  // Combine loading and error states for display
-  const loadingStep = chartLoading;
+  // Enhanced progress tracking
+  const [overallProgress, setOverallProgress] = useState({
+    step: null,
+    percentage: 0,
+    message: ''
+  });
+
+  // Combine all loading states for display
+  const activeLoadingStep = overallProgress.step || chartLoading || transitLoading || ccgLoading || hdLoading;
+  const loadingStep = activeLoadingStep;
   const error = chartError;
 
   // Initialize layers
@@ -229,26 +236,70 @@ function App() {
     ac_aspects: 'AC Aspects',
     fixed_star: 'Fixed Stars',
     hermetic_lot: 'Hermetic Lots',
-    parans: 'Parans',
-  };
+    parans: 'Parans',  };
+  
   // Form submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const chartData = await fetchChart(formData);
-    if (chartData) {
-      await fetchAstro(formData, chartData);
+    
+    try {
+      // Step 1: Calculate natal chart
+      setOverallProgress({ step: 'ephemeris', percentage: 20, message: 'Calculating natal ephemeris...' });
+      const chartData = await fetchChart(formData);
+      
+      if (chartData) {
+        // Step 2: Generate astrocartography
+        setOverallProgress({ step: 'astro', percentage: 60, message: 'Generating astrocartography lines...' });
+        await fetchAstro(formData, chartData);
+        
+        // Step 3: Complete
+        setOverallProgress({ step: 'done', percentage: 100, message: 'Chart generation complete!' });
+        
+        // Clear progress after a short delay
+        setTimeout(() => {
+          setOverallProgress({ step: null, percentage: 0, message: '' });
+        }, 2000);
+      }
+    } catch (error) {
+      setOverallProgress({ step: null, percentage: 0, message: '' });
+      console.error('Chart generation failed:', error);
     }
-  };
-  // Restore handleGenerateCCG for CCGControls
+  };  // Restore handleGenerateCCG for CCGControls
   const handleGenerateCCG = async () => {
-    await fetchCCG(formData, ccgDate);
-    forceMapUpdate(); // Ensure map updates immediately after CCG overlay is generated
+    try {
+      setOverallProgress({ step: 'ccg_ephemeris', percentage: 25, message: 'Calculating CCG ephemeris...' });
+      await fetchCCG(formData, ccgDate);
+      setOverallProgress({ step: 'ccg_complete', percentage: 100, message: 'CCG overlay generated!' });
+      forceMapUpdate(); // Ensure map updates immediately after CCG overlay is generated
+      
+      // Clear progress after delay
+      setTimeout(() => {
+        setOverallProgress({ step: null, percentage: 0, message: '' });
+      }, 2000);
+    } catch (error) {
+      setOverallProgress({ step: null, percentage: 0, message: '' });
+      console.error('CCG generation failed:', error);
+    }
   };
 
   // Human Design handler
   const handleGenerateHD = async () => {
-    await fetchHumanDesign(formData);
-    forceMapUpdate(); // Ensure map updates immediately after HD overlay is generated
+    try {
+      setOverallProgress({ step: 'hd_calculation', percentage: 30, message: 'Calculating Human Design chart...' });
+      await fetchHumanDesign(formData);
+      setOverallProgress({ step: 'hd_complete', percentage: 100, message: 'Human Design overlay generated!' });
+      // Ensure HD_DESIGN layer is visible after generation
+      layerManager.setLayerVisible('HD_DESIGN', true);
+      forceMapUpdate(); // Ensure map updates immediately after HD overlay is generated
+      
+      // Clear progress after delay
+      setTimeout(() => {
+        setOverallProgress({ step: null, percentage: 0, message: '' });
+      }, 2000);
+    } catch (error) {
+      setOverallProgress({ step: null, percentage: 0, message: '' });
+      console.error('Human Design generation failed:', error);
+    }
   };
 
   // Merged/filtered data for map
@@ -525,24 +576,58 @@ function App() {
         </pre>
       )}
       <h1>Meridian V2</h1>
-      <ChartForm formData={formData} setFormData={setFormData} onSubmit={handleSubmit} error={error} />
-      
-      {loadingStep && (
+      <ChartForm formData={formData} setFormData={setFormData} onSubmit={handleSubmit} error={error} />      {loadingStep && (
         <div className="progress-container">
           <div className="progress-bar">
             <div className="progress-fill" style={{
-              width: loadingStep === 'ephemeris' ? '25%' : 
-                     loadingStep === 'astro' ? '50%' :
-                     loadingStep === 'transit_ephemeris' ? '75%' :
-                     loadingStep === 'transit_astro' ? '90%' : '100%'
+              width: overallProgress.percentage > 0 ? `${overallProgress.percentage}%` :
+                     // Chart generation steps
+                     loadingStep === 'ephemeris' ? '15%' : 
+                     loadingStep === 'astro' ? '35%' :
+                     // Transit steps
+                     loadingStep === 'transit_ephemeris' ? '60%' :
+                     loadingStep === 'transit_astro' ? '80%' :
+                     // CCG steps
+                     loadingStep === 'ccg_ephemeris' || ccgLoading === 'ephemeris' ? '25%' :
+                     loadingStep === 'ccg_astro' || ccgLoading === 'astro' ? '75%' :
+                     // Human Design steps
+                     loadingStep === 'chart_calculation' || hdLoading === 'chart_calculation' ? '20%' :
+                     loadingStep === 'hd_calculation' || hdLoading === 'hd_calculation' ? '70%' :
+                     // Completion states
+                     loadingStep === 'done' || loadingStep === 'ccg_complete' || loadingStep === 'hd_complete' ? '100%' : 
+                     '10%'
             }} />
           </div>
           <span className="progress-text">
-            {loadingStep === 'ephemeris' && 'Calculating natal ephemeris...'}
-            {loadingStep === 'astro' && 'Fetching natal astrocartography...'}
-            {loadingStep === 'transit_ephemeris' && 'Calculating transit ephemeris...'}
-            {loadingStep === 'transit_astro' && 'Fetching transit astrocartography...'}
-            {loadingStep === 'done' && 'Done!'}
+            {overallProgress.message || (
+              <>
+                {/* Chart generation */}
+                {loadingStep === 'ephemeris' && 'Calculating natal chart ephemeris...'}
+                {loadingStep === 'astro' && 'Generating astrocartography lines...'}
+                
+                {/* Transit steps */}
+                {loadingStep === 'transit_ephemeris' && 'Calculating transit ephemeris...'}
+                {loadingStep === 'transit_astro' && 'Generating transit astrocartography...'}
+                
+                {/* CCG steps */}
+                {(loadingStep === 'ccg_ephemeris' || ccgLoading === 'ephemeris') && 'Calculating CCG ephemeris...'}
+                {(loadingStep === 'ccg_astro' || ccgLoading === 'astro') && 'Generating CCG astrocartography...'}
+                
+                {/* Human Design steps */}
+                {(loadingStep === 'chart_calculation' || hdLoading === 'chart_calculation') && 'Calculating base chart data...'}
+                {(loadingStep === 'hd_calculation' || hdLoading === 'hd_calculation') && 'Generating Human Design astrocartography...'}
+                
+                {/* Completion states */}
+                {loadingStep === 'done' && 'Natal chart complete!'}
+                {loadingStep === 'ccg_complete' && 'CCG overlay generated!'}
+                {loadingStep === 'hd_complete' && 'Human Design overlay generated!'}
+                
+                {/* Generic loading fallback */}
+                {!['ephemeris', 'astro', 'transit_ephemeris', 'transit_astro', 'ccg_ephemeris', 'ccg_astro', 
+                    'chart_calculation', 'hd_calculation', 'done', 'ccg_complete', 'hd_complete'].includes(loadingStep) && 
+                 'Processing...'}
+              </>
+            )}
           </span>
         </div>
       )}

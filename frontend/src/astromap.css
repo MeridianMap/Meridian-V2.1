@@ -13,6 +13,7 @@
 .leaflet-container {
   width: 100%;
   height: 100%;
+  cursor: crosshair;
 }
 
 /* Shared legend styling */
@@ -49,6 +50,15 @@
   margin-top: 2px;
 }
 
+/* Highlight circle styles */
+.highlight-circle {
+  transition: opacity 0.3s ease;
+}
+
+.highlight-circle:hover {
+  stroke-opacity: 0.5 !important;
+}
+
 /* Coordinate grid styling */
 .coordinate-grid-labels {
   pointer-events: none !important;
@@ -75,4 +85,9 @@
 
 .distance-scale-control:hover {
   background-color: rgba(255, 255, 255, 1) !important;
+}
+
+/* Override cursor for interactive elements */
+.leaflet-interactive {
+  cursor: pointer !important;
 }

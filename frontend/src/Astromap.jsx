@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
-import { MapContainer, TileLayer, Polyline, Tooltip, Circle, useMap } from "react-leaflet";
+import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Polyline, Tooltip, Circle, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "./astromap.css";
+import AstroTooltipContent from "./AstroTooltipContent";
 
 // Map of planet colors (fallback)
 const planetColors = {
@@ -54,7 +55,107 @@ const getLineStyle = (feature) => {
   }
 };
 
+// Custom component for handling map clicks and creating highlight circle
+const ClickableMap = ({ highlightCircle, setHighlightCircle }) => {
+  const map = useMapEvents({
+    click: (e) => {
+      const { lat, lng } = e.latlng;
+      const newCircle = {
+        id: Date.now(), // Simple unique ID
+        center: [lat, lng],
+        radius: 241402 // 150 miles in meters (150 * 1.60934 * 1000)
+      };
+      
+      // Set the single circle to the new location
+      setHighlightCircle(newCircle);
+    }
+  });
+  // Create gradient circle using SVG overlay
+  useEffect(() => {
+    if (!highlightCircle) return;
+
+    const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgElement.style.position = "absolute";
+    svgElement.style.top = "0";
+    svgElement.style.left = "0";
+    svgElement.style.width = "100%";
+    svgElement.style.height = "100%";
+    svgElement.style.pointerEvents = "none";
+    svgElement.style.zIndex = "400";
+
+    // Create gradient definition
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const gradient = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+    gradient.setAttribute("id", "highlight-gradient");
+    gradient.setAttribute("cx", "50%");
+    gradient.setAttribute("cy", "50%");
+    gradient.setAttribute("r", "50%");
+
+    // Create gradient stops (center to edge fade)
+    const centerStop = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+    centerStop.setAttribute("offset", "0%");
+    centerStop.setAttribute("stop-color", "#4A90E2");
+    centerStop.setAttribute("stop-opacity", "0.2");
+
+    const edgeStop = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+    edgeStop.setAttribute("offset", "100%");
+    edgeStop.setAttribute("stop-color", "#4A90E2");
+    edgeStop.setAttribute("stop-opacity", "0.08");
+
+    gradient.appendChild(centerStop);
+    gradient.appendChild(edgeStop);
+    defs.appendChild(gradient);
+    svgElement.appendChild(defs);
+
+    // Add SVG to map container
+    const mapContainer = map.getContainer();
+    mapContainer.appendChild(svgElement);
+
+    const updateCircle = () => {
+      // Clear existing circle
+      const existingCircle = svgElement.querySelector('.highlight-circle');
+      if (existingCircle) existingCircle.remove();
+
+      // Draw the circle
+      const point = map.latLngToContainerPoint(highlightCircle.center);
+      const tempLatLng = L.latLng(highlightCircle.center[0], highlightCircle.center[1]);
+      const tempLatLng2 = L.latLng(highlightCircle.center[0], highlightCircle.center[1] + 0.1);
+      const pixelRadius = Math.abs(map.latLngToContainerPoint(tempLatLng).x - 
+                                 map.latLngToContainerPoint(tempLatLng2).x) * 
+                                 (highlightCircle.radius / tempLatLng.distanceTo(tempLatLng2));
+
+      const svgCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      svgCircle.setAttribute("class", "highlight-circle");
+      svgCircle.setAttribute("cx", point.x);
+      svgCircle.setAttribute("cy", point.y);
+      svgCircle.setAttribute("r", pixelRadius);
+      svgCircle.setAttribute("fill", "url(#highlight-gradient)");
+      svgCircle.setAttribute("stroke", "#4A90E2");
+      svgCircle.setAttribute("stroke-width", "1");
+      svgCircle.setAttribute("stroke-opacity", "0.3");
+
+      svgElement.appendChild(svgCircle);
+    };
+
+    // Update circle on map events
+    map.on('zoom move zoomend moveend', updateCircle);
+    updateCircle(); // Initial draw
+
+    return () => {
+      map.off('zoom move zoomend moveend', updateCircle);
+      if (mapContainer.contains(svgElement)) {
+        mapContainer.removeChild(svgElement);
+      }
+    };
+  }, [map, highlightCircle]);
+
+  return null;
+};
+
 const AstroMap = ({ data, paransData }) => {
+  // Add state for single highlight circle
+  const [highlightCircle, setHighlightCircle] = useState(null);
+
   // Debug logging
   console.log('AstroMap render - data features:', data?.features?.length || 0);
   console.log('AstroMap render - transit features:', data?.features?.filter(f => f.layerName === 'transit')?.length || 0);
@@ -111,7 +212,34 @@ const AstroMap = ({ data, paransData }) => {
           </pre>
         )}
       </div>
-      */}      <MapContainer
+      */}      {/* Add clear circle button */}
+      {highlightCircle && (
+        <div style={{ 
+          position: 'absolute', 
+          top: '10px', 
+          right: '10px', 
+          zIndex: 1000,
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+        }}>
+          <button
+            onClick={() => setHighlightCircle(null)}
+            style={{
+              padding: '4px 8px',
+              fontSize: '12px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              backgroundColor: '#fff',
+              cursor: 'pointer'
+            }}
+          >
+            Clear Circle
+          </button>
+        </div>
+      )}
+      <MapContainer
         className="leaflet-container"
         center={[0, 0]}
         zoom={3}
@@ -127,6 +255,11 @@ const AstroMap = ({ data, paransData }) => {
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
           subdomains={["a", "b", "c", "d"]}
           attribution="© OpenStreetMap contributors © CARTO"
+        />
+          {/* Add the clickable map component */}
+        <ClickableMap 
+          highlightCircle={highlightCircle} 
+          setHighlightCircle={setHighlightCircle} 
         />
         
         {/* Add coordinate grid and distance scale */}
@@ -169,7 +302,9 @@ const AstroMap = ({ data, paransData }) => {
                 }}
                 smoothFactor={1}
               >
-                <Tooltip sticky>{label}</Tooltip>
+                <Tooltip sticky>
+                  <AstroTooltipContent feat={feat} label={label} />
+                </Tooltip>
               </Polyline>,              // Visible line (normal thickness)
               <Polyline
                 key={`mcic-${idx}-${offset}`}
@@ -237,7 +372,9 @@ const AstroMap = ({ data, paransData }) => {
                   }}
                   smoothFactor={1}
                 >
-                  <Tooltip sticky>{label}</Tooltip>
+                  <Tooltip sticky>
+                    <AstroTooltipContent feat={feat} label={label} />
+                  </Tooltip>
                 </Polyline>,                // Visible line (normal thickness)
                 <Polyline
                   key={`horizon-${idx}-${segIdx}-${offset}`}
@@ -277,7 +414,9 @@ const AstroMap = ({ data, paransData }) => {
                   }}
                   smoothFactor={1}
                 >
-                  <Tooltip sticky>{label}</Tooltip>
+                  <Tooltip sticky>
+                    <AstroTooltipContent feat={feat} label={label} />
+                  </Tooltip>
                 </Polyline>,                // Visible line (normal thickness)
                 <Polyline
                   key={`aspect-${idx}-${segIdx}-${offset}`}
@@ -313,7 +452,9 @@ const AstroMap = ({ data, paransData }) => {
                 }}
                 smoothFactor={1}
               >
-                <Tooltip sticky>{label}</Tooltip>
+                <Tooltip sticky>
+                  <AstroTooltipContent feat={feat} label={label} />
+                </Tooltip>
               </Polyline>,
               // Visible line (normal thickness)
               <Polyline
@@ -359,7 +500,9 @@ const AstroMap = ({ data, paransData }) => {
                   }}
                   smoothFactor={1}
                 >
-                  <Tooltip sticky>{acLabel}</Tooltip>
+                  <Tooltip sticky>
+                    <AstroTooltipContent feat={feat} label={acLabel} />
+                  </Tooltip>
                 </Polyline>
               ),              // AC segment - visible line
               ac_coords.length > 1 && (
@@ -387,7 +530,9 @@ const AstroMap = ({ data, paransData }) => {
                   }}
                   smoothFactor={1}
                 >
-                  <Tooltip sticky>{dcLabel}</Tooltip>
+                  <Tooltip sticky>
+                    <AstroTooltipContent feat={feat} label={dcLabel} />
+                  </Tooltip>
                 </Polyline>
               ),              // DC segment - visible line
               dc_coords.length > 1 && (
@@ -414,18 +559,16 @@ const AstroMap = ({ data, paransData }) => {
                 pathOptions={{ color: "#e6b800", fillColor: "#fffbe6", fillOpacity: 0.5 }}
               >
                 <Tooltip sticky>
-                  <b>{feat.properties.star}</b>
-                  {feat.properties.magnitude !== undefined && (
-                    <span> (mag {feat.properties.magnitude.toFixed(2)})</span>
-                  )}
+                  <AstroTooltipContent feat={feat} label={feat.properties.star} />
                 </Tooltip>
               </Circle>
             ));
           }
           return null;
         })}
-        <CoordinateGrid />
-        <DistanceScale />
+        <CoordinateGrid />        <DistanceScale />
+        {/* Clickable map component for handling clicks and highlights */}
+        <ClickableMap highlightCircle={highlightCircle} setHighlightCircle={setHighlightCircle} />
       </MapContainer>
     </div>
   );
