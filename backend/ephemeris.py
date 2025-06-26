@@ -10,6 +10,8 @@ from backend.hermetic_lots import calculate_hermetic_lots
 from backend.fixed_star import get_fixed_star_positions
 from backend.aspects import calculate_aspects
 from backend.constants import HOUSE_SYSTEMS, ZODIAC_SIGNS
+from backend.house_systems import validate_house_system, get_house_system_name
+from backend.house_placement import add_house_placements_to_chart_data
 import swisseph as swe
 import pytz
 import datetime
@@ -121,6 +123,10 @@ def calculate_chart(
         dict: Complete astrological chart data
     """
     try:
+        # Validate house system
+        if not validate_house_system(house_system):
+            return {"error": f"Unsupported house system: {house_system}. Use one of: {list(HOUSE_SYSTEMS.keys())}"}
+        
         coordinates = get_coordinates(birth_city, birth_state, birth_country)
         if not coordinates:
             return {"error": "Could not geocode location. Please check city, state, and country information."}
@@ -245,6 +251,10 @@ def calculate_chart(
             "lots": lots_data,
             "fixed_stars": fixed_stars_data
         }
+        
+        # Add house placements to all bodies
+        result = add_house_placements_to_chart_data(result)
+        
         return result
     except Exception as e:
         return {"error": str(e)}

@@ -11,10 +11,12 @@ try:
     from backend.ephemeris_utils import initialize_ephemeris
     from backend.spline_utils import parametric_spline
     from backend.line_ac_dc import split_dateline
+    from backend.humandesign_gates import get_gate_from_longitude, get_gate_line_from_longitude
 except ImportError:
     from ephemeris_utils import initialize_ephemeris
     from spline_utils import parametric_spline
     from line_ac_dc import split_dateline
+    from humandesign_gates import get_gate_from_longitude, get_gate_line_from_longitude
 
 initialize_ephemeris()
 
@@ -136,30 +138,56 @@ def calculate_aspect_lines(chart_data, debug=False):
         jd_tt = jd_ut + delta_t / 86400.0
         
         # Get true obliquity for this date
-        obliq = get_true_obliquity(jd_tt)
-        # MC aspect lines (planet ± 60°, 90°, 120° to the Midheaven)
+        obliq = get_true_obliquity(jd_tt)        # MC aspect lines (planet ± 60°, 90°, 120° to the Midheaven)
         # Use sidereal time based on UT, not TT, per Swiss Ephemeris docs and astro.com
         gst_deg = swe.sidtime(jd_ut) * 15.0      # GST in UT hours → degrees
+
+        # Create planet lookup for house and sign info
+        planet_lookup = {p.get("name", "").strip(): p for p in chart_data["planets"]}
 
         mc_count = 0
         for name, pos in planet_pos.items():
             plon = pos["ecl_lon"]                   # ecliptic longitude
+            planet_data = planet_lookup.get(name, {})
+            
             for delta in ASPECT_ANGLES + [-a for a in ASPECT_ANGLES]:
                 target = (plon - delta) % 360
                 lon_geo = geo_lon_for_mc(target, gst_deg, obliq)
 
                 # draw full meridian
                 coords = [[lon_geo, -89.9], [lon_geo, 89.9]]
+                feature_properties = {
+                    "planet": name,
+                    "line_type": "ASPECT",
+                    "angle": abs(delta),
+                    "to": "MC",
+                    "label": _aspect_label(name, delta, "MC")
+                }
+                  # Add house and sign information if available
+                if planet_data.get("house"):
+                    feature_properties["house"] = planet_data.get("house")
+                if planet_data.get("sign"):
+                    feature_properties["sign"] = planet_data.get("sign")
+                
+                # Add Human Design gate information if longitude is available
+                if planet_data.get("longitude"):
+                    try:
+                        gate_info = get_gate_from_longitude(planet_data.get("longitude"))
+                        gate_line_info = get_gate_line_from_longitude(planet_data.get("longitude"))
+                        if gate_info:
+                            feature_properties["hd_gate"] = gate_info["gate"]
+                            feature_properties["hd_gate_name"] = gate_info["name"]
+                        if gate_line_info:
+                            feature_properties["hd_line"] = gate_line_info["line"]
+                            feature_properties["hd_line_name"] = gate_line_info["name"]
+                    except Exception as e:
+                        if debug:
+                            print(f"[WARN] Error calculating Human Design gate for {name}: {e}")
+                
                 features.append({
                     "type": "Feature",
                     "geometry": {"type": "LineString", "coordinates": coords},
-                    "properties": {
-                        "planet": name,
-                        "line_type": "ASPECT",
-                        "angle": abs(delta),
-                        "to": "MC",
-                        "label": _aspect_label(name, delta, "MC")
-                    },
+                    "properties": feature_properties
                 })
                 mc_count += 1
         if debug:
@@ -170,12 +198,34 @@ def calculate_aspect_lines(chart_data, debug=False):
         asc_count = 0
         for pname, pos in planet_pos.items():
             planet_ecl_lon = pos["ecl_lon"]
+            planet_data = planet_lookup.get(pname, {})
+            
             for delta in ASPECT_ANGLES + [-a for a in ASPECT_ANGLES]:
                 target_asc = (planet_ecl_lon - delta) % 360
-                
-                # Generate aspect line using simplified approach
+                  # Generate aspect line using simplified approach
                 feat = _generate_asc_aspect_line(pname, target_asc, delta, jd_tt, lat_steps, debug)
                 if feat is not None:
+                    # Add house and sign information if available
+                    if planet_data.get("house"):
+                        feat["properties"]["house"] = planet_data.get("house")
+                    if planet_data.get("sign"):
+                        feat["properties"]["sign"] = planet_data.get("sign")
+                    
+                    # Add Human Design gate information if longitude is available
+                    if planet_data.get("longitude"):
+                        try:
+                            gate_info = get_gate_from_longitude(planet_data.get("longitude"))
+                            gate_line_info = get_gate_line_from_longitude(planet_data.get("longitude"))
+                            if gate_info:
+                                feat["properties"]["hd_gate"] = gate_info["gate"]
+                                feat["properties"]["hd_gate_name"] = gate_info["name"]
+                            if gate_line_info:
+                                feat["properties"]["hd_line"] = gate_line_info["line"]
+                                feat["properties"]["hd_line_name"] = gate_line_info["name"]
+                        except Exception as e:
+                            if debug:
+                                print(f"[WARN] Error calculating Human Design gate for {pname}: {e}")
+                    
                     features.append(feat)
                     asc_count += 1
                     if debug:

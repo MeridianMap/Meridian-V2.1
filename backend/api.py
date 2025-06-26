@@ -27,6 +27,7 @@ from backend.utils import filter_lines_near_location
 # Import Human Design layer support
 from backend.layers.humandesign import calculate_human_design_layer
 # from backend.parans import calculate_parans
+from backend.house_systems import get_house_system_choices, get_house_systems_by_category, get_default_house_system, get_recommended_house_systems, HOUSE_SYSTEM_INFO
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -224,9 +225,28 @@ def api_astrocartography():
 
 @app.route('/api/house-systems', methods=['GET'])
 def api_get_house_systems():
-    from backend.ephemeris import HOUSE_SYSTEMS
-    house_systems = [{"id": key, "name": key.replace('_', ' ').title()} for key in HOUSE_SYSTEMS.keys()]
-    return jsonify(house_systems)
+    """
+    Get available house systems with their metadata.
+    """
+    try:
+        # Get detailed house system information
+        house_systems = []
+        for key, label in get_house_system_choices():
+            house_systems.append({
+                "id": key,
+                "name": label,
+                "description": HOUSE_SYSTEM_INFO.get(key, {}).get('description', ''),
+                "category": HOUSE_SYSTEM_INFO.get(key, {}).get('category', 'modern')
+            })
+        
+        return jsonify({
+            "house_systems": house_systems,
+            "default": get_default_house_system(),
+            "recommended": get_recommended_house_systems(),
+            "by_category": get_house_systems_by_category()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/timezones', methods=['GET'])
 def api_get_timezones():
