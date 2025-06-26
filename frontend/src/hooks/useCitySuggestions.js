@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-const GEOAPIFY_API_KEY = '89b7ba6d03ca4cfc871fac9f5d3dade0';
+const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
 const TIMEZONEDB_API_KEY = 'YHIFBIVJIA14';
 
 function useCitySuggestions(formData, setFormData) {

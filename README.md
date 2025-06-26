@@ -35,16 +35,51 @@ This is an enhanced version of the astrological web application that calculates 
 
 ## Installation
 
-1. Install Python dependencies:
-```
-pip install -r requirements.txt
+### Prerequisites
+- Python 3.9+ with pip
+- Node.js 16+ with npm
+
+### Environment Setup
+
+1. **Clone the repository**:
+```bash
+git clone <repository-url>
+cd meridian-v2
 ```
 
-2. Install Node.js dependencies:
+2. **Backend Setup**:
+```bash
+# Create Python virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install Python dependencies
+cd backend
+pip install -r requirements.txt
+
+# Copy environment template and configure
+cp .env.example .env
+# Edit .env file with your API keys (optional)
 ```
-cd frontend-src
+
+3. **Frontend Setup**:
+```bash
+cd frontend
 npm install
+
+# Copy environment template and configure
+cp .env.example .env
+# Edit .env file and add your Geoapify API key
 ```
+
+4. **Get API Keys** (Required):
+   - **Geoapify API Key**: Get a free key at [geoapify.com](https://www.geoapify.com/) for location search
+   - Add to `frontend/.env`: `VITE_GEOAPIFY_API_KEY=your_key_here`
 
 ## Running the Application
 
