@@ -1,2 +1,3 @@
 run = "bash start.sh"
-entrypoint = "bash start.sh"
+language = "bash"
+entrypoint = "start.sh"

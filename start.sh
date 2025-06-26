@@ -10,19 +10,13 @@ lsof -ti:5000 | xargs kill -9 2>/dev/null
 echo "Starting Flask backend..."
 cd backend
 python3 api.py &
-FLASK_PID=$!
 cd ..
-
-# Wait for Flask to initialize
-echo "Waiting for Flask to initialize..."
-sleep 3
 
 # Start frontend
 echo "Starting frontend..."
 cd frontend
 npm install
-npm run dev &
-FRONTEND_PID=$!
+npm run dev
 cd ..
 
 echo "Application is running!"
