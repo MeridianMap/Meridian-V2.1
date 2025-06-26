@@ -1,28 +1,29 @@
 #!/bin/bash
 # Start script for the deployed astrological web application
 
-# Kill any existing processes on ports 5000 and 3000
+# Kill stray processes on $PORT and 5000
 echo "Checking for existing processes..."
-kill $(lsof -t -i:5000) 2>/dev/null
-kill $(lsof -t -i:3000) 2>/dev/null
+lsof -ti:$PORT | xargs kill -9 2>/dev/null
+lsof -ti:5000 | xargs kill -9 2>/dev/null
 
-# Start the Flask backend
+# Start backend
 echo "Starting Flask backend..."
-cd "$(dirname "$0")"
-python backend/api.py &
+cd backend
+python -m flask run --host=0.0.0.0 --port=5000 &
 FLASK_PID=$!
-echo "Flask backend started with PID: $FLASK_PID"
+cd ..
 
 # Wait for Flask to initialize
 echo "Waiting for Flask to initialize..."
 sleep 3
 
-# Start the Next.js frontend
+# Start frontend
 echo "Starting Next.js frontend..."
-cd "$(dirname "$0")/frontend"
+cd frontend
+npm install
 npm run dev &
 NEXT_PID=$!
-echo "Next.js frontend started with PID: $NEXT_PID"
+cd ..
 
 echo "Application is running!"
 echo "- Backend API: http://localhost:5000"
