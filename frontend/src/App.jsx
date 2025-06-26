@@ -17,7 +17,7 @@ import useTransitData from './hooks/useTransitData';
 import useCCGData from './hooks/useCCGData';
 import useHumanDesignData from './hooks/useHumanDesignData';
 
-const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY
+const GEOAPIFY_API_KEY = import.meta.env.VITE_GEO_API_KEY
 const TIMEZONEDB_API_KEY = 'YHIFBIVJIA14'
 
 function App() {

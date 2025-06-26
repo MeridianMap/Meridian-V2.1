@@ -9,7 +9,7 @@ lsof -ti:5000 | xargs kill -9 2>/dev/null
 # Start backend
 echo "Starting Flask backend..."
 cd backend
-python -m flask run --host=0.0.0.0 --port=5000 &
+python3 api.py &
 FLASK_PID=$!
 cd ..
 
@@ -18,11 +18,11 @@ echo "Waiting for Flask to initialize..."
 sleep 3
 
 # Start frontend
-echo "Starting Next.js frontend..."
+echo "Starting frontend..."
 cd frontend
 npm install
 npm run dev &
-NEXT_PID=$!
+FRONTEND_PID=$!
 cd ..
 
 echo "Application is running!"
@@ -31,6 +31,6 @@ echo "- Frontend: http://localhost:3000"
 echo ""
 echo "Press Ctrl+C to stop both servers"
 
-# Wait for user to press Ctrl+C
-trap "kill $FLASK_PID $NEXT_PID; exit" INT
+# Wait for both processes
+trap "kill $FLASK_PID $FRONTEND_PID; exit" INT
 wait
