@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: meridian-api
+    env: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.lock
+    startCommand: gunicorn backend.api:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: '1'
+      - key: PORT
+        value: '5000'
+  - type: web
+    name: meridian-front
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist

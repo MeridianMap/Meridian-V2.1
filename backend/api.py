@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Flask API for Swiss Ephemeris Calculations + GPT Interpretation
+Flask API for Swiss Ephemeris Calculations
 """
 
 from flask import Flask, request, jsonify
@@ -9,6 +9,7 @@ import json
 import sys
 import os
 import swisseph as swe
+import logging
 
 # Unset SE_EPHE_PATH to avoid conflicts
 if "SE_EPHE_PATH" in os.environ:
@@ -21,7 +22,6 @@ swe.set_ephe_path(os.path.join(os.path.dirname(__file__), "ephe"))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.ephemeris import calculate_chart
 from backend.location_utils import get_location_suggestions, detect_timezone_from_coordinates
-from backend.interpretation import generate_interpretation  # <-- NEW IMPORT
 from backend.astrocartography import calculate_astrocartography_lines_geojson
 from backend.utils import filter_lines_near_location
 # Import Human Design layer support
@@ -31,6 +31,9 @@ from backend.house_systems import get_house_system_choices, get_house_systems_by
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 @app.route('/api/calculate', methods=['POST'])
 def api_calculate_chart():
@@ -104,8 +107,9 @@ def api_interpret():
         chart_data["filtered_lines"] = filtered_lines
 
         # Generate interpretation with GPT
-        interpretation = generate_interpretation(chart_data)
-        return jsonify({"interpretation": interpretation})
+        # interpretation = generate_interpretation(chart_data)  # REMOVED: No longer exists
+        # return jsonify({"interpretation": interpretation})
+        return jsonify({"filtered_lines": filtered_lines})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -304,9 +308,9 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     return response
 
-@app.route('/health', methods=['GET'])
-def health_check():
+@app.route('/api/health')
+def health():
     return jsonify({"status": "ok"})
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))

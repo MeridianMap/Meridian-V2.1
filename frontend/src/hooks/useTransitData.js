@@ -34,7 +34,7 @@ export default function useTransitData(layerManager, forceMapUpdate, timeManager
         ...transitParams,
         use_extended_planets: true
       };
-      const transitChartResult = await axios.post('http://localhost:5000/api/calculate', transitChartPayload);
+      const transitChartResult = await axios.post('/api/calculate', transitChartPayload);
       setLoadingStep('transit_astro');
       
       const transitPayload = {
@@ -51,7 +51,7 @@ export default function useTransitData(layerManager, forceMapUpdate, timeManager
         include_ac_dc: true,
         include_ic_mc: true
       };
-      const transitRes = await axios.post('http://localhost:5000/api/astrocartography', transitPayload);
+      const transitRes = await axios.post('/api/astrocartography', transitPayload);
       layerManager.setLayerData('transit', transitRes.data);
       setTransitData(transitRes.data);
       layerManager.setLayerVisible('transit', true);

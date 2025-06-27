@@ -10,7 +10,7 @@ export default function useHumanDesignData(layerManager, forceMapUpdate) {
     
     try {
       // First, get the chart data to obtain coordinates
-      const chartResult = await axios.post('http://localhost:5000/api/calculate', {
+      const chartResult = await axios.post('/api/calculate', {
         ...formData
       });
       
@@ -44,7 +44,7 @@ export default function useHumanDesignData(layerManager, forceMapUpdate) {
 
       console.log('[HD] Sending Human Design request:', hdPayload);
       
-      const hdRes = await axios.post('http://localhost:5000/api/astrocartography', hdPayload);
+      const hdRes = await axios.post('/api/astrocartography', hdPayload);
       
       console.log('[HD] Received Human Design response:', hdRes.data);
       

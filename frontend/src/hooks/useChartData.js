@@ -10,7 +10,7 @@ export default function useChartData(timeManager) {
     setError(null);
     setLoadingStep('ephemeris');
     try {
-      const chartResult = await axios.post('http://localhost:5000/api/calculate', {
+      const chartResult = await axios.post('/api/calculate', {
         ...formData,
         use_extended_planets: true
       });

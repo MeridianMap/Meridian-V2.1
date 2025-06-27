@@ -64,3 +64,4 @@ verify_*.py
 
 # Ignore swisseph doc/media images (optional, remove if you want to keep them in repo)
 swisseph doc/media/
+swisseph doc/

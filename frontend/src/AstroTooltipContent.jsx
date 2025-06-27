@@ -254,31 +254,11 @@ const AstroTooltipContent = ({ feat, label }) => {
       alreadyRendered.add(starName);
     }
   }
-  // --- UNIVERSAL HOUSE AND SIGN BLOCK ---
-  // Always display house and sign if the feature has them, regardless of type
-  if (feat.properties.house && feat.properties.sign) {
-    const houseDef = getDef("houses", feat.properties.house.toString());
-    const signDef = getDef("zodiacSigns", feat.properties.sign);
-
-    if (houseDef) {
-      lines.push(
-        renderDefLine(
-          `${getOrdinalSuffix(feat.properties.house)} house`,
-          houseDef
-        )
-      );
-    }
-    if (signDef) {
-      lines.push(renderDefLine(feat.properties.sign, signDef));
-    }
-  }
   // --- UNIVERSAL HUMAN DESIGN GATE BLOCK ---
-  // Always display HD gate if the feature has it, regardless of type
   if (feat.properties.hd_gate) {
     const gateName = feat.properties.hd_gate_name || "";
     const gateNumber = feat.properties.hd_gate;
     const lineNumber = feat.properties.hd_line || "";
-    
     // Display gate number and name
     lines.push(
       renderDefLine(
@@ -286,7 +266,6 @@ const AstroTooltipContent = ({ feat, label }) => {
         getDef("humanDesignGates", gateNumber.toString()) || ""
       )
     );
-    
     // Display gate line if available
     if (lineNumber) {
       lines.push(
@@ -297,8 +276,27 @@ const AstroTooltipContent = ({ feat, label }) => {
       );
     }
   }
+  // --- UNIVERSAL HOUSE AND SIGN BLOCK ---
+  // Show house and sign independently if they exist
+  if (feat.properties.house != null) {
+    const houseDef = getDef("houses", String(feat.properties.house));
+    if (houseDef) {
+      lines.push(
+        renderDefLine(
+          `${getOrdinalSuffix(Number(feat.properties.house))} house`,
+          houseDef
+        )
+      );
+    }
+  }
+  if (feat.properties.sign != null) {
+    const signDef = getDef("zodiacSigns", String(feat.properties.sign));
+    if (signDef) {
+      lines.push(renderDefLine(String(feat.properties.sign), signDef));
+    }
+  }
 
-  return <div>{lines}</div>;
+  return <div style={{ lineHeight: 1.4 }}>{lines}</div>;
 };
 
 export default AstroTooltipContent;

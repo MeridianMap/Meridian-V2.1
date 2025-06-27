@@ -5,8 +5,11 @@ flask==2.3.3
 flask-cors==4.0.0
 timezonefinder==6.5.9
 requests==2.31.0
-openai==1.14.3
+idna
 python-dotenv==1.0.1
 scipy==1.13.0
 shapely==2.0.4
 numpy==1.24.3
+swisseph==0.0.0.dev1
+geojson
+pyproj

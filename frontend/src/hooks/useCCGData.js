@@ -9,14 +9,14 @@ export default function useCCGData(layerManager, forceMapUpdate) {
     setError(null);
     setLoadingStep('ephemeris');
     try {
-      const chartResult = await axios.post('http://localhost:5000/api/calculate', {
+      const chartResult = await axios.post('/api/calculate', {
         ...formData,
         progressed_for: ["Sun", "Moon", "Mercury", "Venus", "Mars"],
         progression_method: "secondary",
         progressed_date: ccgDate
       });
       setLoadingStep('astro');
-      const astroRes = await axios.post('http://localhost:5000/api/astrocartography', {
+      const astroRes = await axios.post('/api/astrocartography', {
         birth_date: formData.birth_date,
         birth_time: formData.birth_time,
         coordinates: chartResult.data.coordinates,

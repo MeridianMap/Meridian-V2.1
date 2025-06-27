@@ -408,14 +408,29 @@ class HumanDesignLayer:
         
         planets = get_positions(jd_design, planet_names)
         
-        # Mark all planets as design data
+        # Calculate houses at design time FIRST
+        house_system = self.opts.get('house_system', 'whole_sign')
+        houses_data = self._calculate_houses_at_design(jd_design, house_system)
+        
+        # Mark all planets as design data AND add house/sign info
+        ascendant_long = houses_data.get('ascendant', {}).get('longitude')
         for planet in planets:
             planet['data_type'] = 'hd_design'
             planet['hd_design'] = True
-        
-        # Calculate houses at design time
-        house_system = self.opts.get('house_system', 'whole_sign')
-        houses_data = self._calculate_houses_at_design(jd_design, house_system)
+            
+            # Add house and sign information directly
+            if ascendant_long is not None and 'longitude' in planet:
+                # Calculate house placement
+                planet_long = planet['longitude']
+                asc_sign = int(ascendant_long / 30)
+                planet_sign = int(planet_long / 30)
+                house_num = ((planet_sign - asc_sign) % 12) + 1
+                planet['house'] = house_num
+                
+                # Add sign information
+                signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", 
+                        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+                planet['sign'] = signs[int(planet_long / 30)]
         
         # Calculate hermetic lots
         ascendant_long = houses_data.get('ascendant', {}).get('longitude')
@@ -426,6 +441,20 @@ class HumanDesignLayer:
                 for lot in lots:
                     lot['hd_design'] = True
                     lot['data_type'] = 'hd_design'
+                    
+                    # Add house and sign information to lots too
+                    if 'longitude' in lot:
+                        lot_long = lot['longitude']
+                        asc_sign = int(ascendant_long / 30)
+                        lot_sign = int(lot_long / 30)
+                        house_num = ((lot_sign - asc_sign) % 12) + 1
+                        lot['house'] = house_num
+                        
+                        # Add sign if not already present
+                        if 'sign' not in lot:
+                            signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", 
+                                    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+                            lot['sign'] = signs[int(lot_long / 30)]
             except Exception as e:
                 print(f"[HD] Error calculating lots: {e}")
         
