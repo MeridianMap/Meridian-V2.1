@@ -21,9 +21,27 @@ npm run dev
 | VITE_GEOAPIFY_API_KEY   | your_geoapify_api_key_here     | Geoapify API key for geocoding    |
 
 ## Render.com Deployment Guide
-- One-click deploy: Connect your repo to Render, and Render will auto-detect `render.yaml`.
-- Backend: Python web service, starts with Gunicorn.
-- Frontend: Static site, built and published from `frontend/dist`.
+
+### Prerequisites
+1. Create accounts on:
+   - [Render.com](https://render.com)
+   - [Geoapify](https://www.geoapify.com) (for location search API)
+
+### Deployment Steps
+1. **Fork or clone this repository** to your GitHub account
+2. **Connect to Render**: 
+   - Sign in to Render.com
+   - Click "New +" → "Blueprint"
+   - Connect your GitHub repo
+   - Render will auto-detect `render.yaml` and deploy both services
+3. **Configure Environment Variables**:
+   - Frontend service: Add `VITE_GEOAPIFY_API_KEY`
+4. **Deploy**: Services will build and deploy automatically
+
+### Architecture
+- **Backend**: Docker-based Python web service with Swiss Ephemeris
+- **Frontend**: Static site built with Vite, served from `frontend/dist`
+- **Health Check**: Available at `/api/health`
 
 ## API Reference
 - `/api/health` — Health check endpoint, returns `{status: "ok"}`
