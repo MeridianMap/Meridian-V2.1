@@ -3,6 +3,7 @@ services:
     name: meridian-api
     env: docker
     plan: free
+    pythonVersion: 3.11.9
     dockerfilePath: ./Dockerfile
     envVars:
       - key: PYTHONUNBUFFERED
