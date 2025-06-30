@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 const increments = [
   { label: '− Day', value: -1, unit: 'day' },

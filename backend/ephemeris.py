@@ -4,14 +4,14 @@ Swiss Ephemeris Interface for Astrological Calculations
 Coordinator module: delegates core logic to specialized modules and assembles chart data.
 """
 
-from backend.location_utils import get_coordinates
-from backend.ephemeris_utils import calculate_extended_planets, initialize_ephemeris
-from backend.hermetic_lots import calculate_hermetic_lots
-from backend.fixed_star import get_fixed_star_positions
-from backend.aspects import calculate_aspects
-from backend.constants import HOUSE_SYSTEMS, ZODIAC_SIGNS
-from backend.house_systems import validate_house_system, get_house_system_name
-from backend.house_placement import add_house_placements_to_chart_data
+from location_utils import get_coordinates
+from ephemeris_utils import calculate_extended_planets, initialize_ephemeris, ensure_ephemeris_path
+from hermetic_lots import calculate_hermetic_lots
+from fixed_star import get_fixed_star_positions
+from aspects import calculate_aspects
+from constants import HOUSE_SYSTEMS, ZODIAC_SIGNS
+from house_systems import validate_house_system, get_house_system_name
+from house_placement import add_house_placements_to_chart_data
 import swisseph as swe
 import pytz
 import datetime
@@ -52,6 +52,7 @@ def convert_to_utc(date_str, time_str, timezone_str):
         return None
 
 def calculate_houses(jd_ut, lat, lon, house_system='whole_sign'):
+    ensure_ephemeris_path()
     """
     Calculate house cusps and related points.
     Args:
@@ -102,17 +103,18 @@ def calculate_houses(jd_ut, lat, lon, house_system='whole_sign'):
     return result
 
 def calculate_chart(
-    birth_date, birth_time, birth_city, birth_state="", birth_country="", timezone="", house_system='whole_sign', use_extended_planets=False,
-    progressed_for=None, progression_method="secondary", progressed_date=None
+    birth_date, birth_time, birth_city=None, birth_state="", birth_country="", timezone="", house_system='whole_sign', use_extended_planets=False,
+    progressed_for=None, progression_method="secondary", progressed_date=None, coordinates=None
 ):
     """
     Calculate complete astrological chart by delegating to specialized modules.
     Args:
         birth_date (str): Birth date in format "YYYY-MM-DD" or "MM/DD/YYYY"
         birth_time (str): Birth time in format "HH:MM"
-        birth_city (str): City of birth
+        birth_city (str, optional): City of birth
         birth_state (str, optional): State/province/region of birth
         birth_country (str, optional): Country of birth
+        coordinates (dict, optional): Dict with 'latitude' and 'longitude' keys
         timezone (str): Timezone string (e.g., "America/New_York")
         house_system (str): House system to use
         use_extended_planets (bool): Whether to use extended planet set including asteroids
@@ -127,10 +129,20 @@ def calculate_chart(
         if not validate_house_system(house_system):
             return {"error": f"Unsupported house system: {house_system}. Use one of: {list(HOUSE_SYSTEMS.keys())}"}
         
-        coordinates = get_coordinates(birth_city, birth_state, birth_country)
-        if not coordinates:
-            return {"error": "Could not geocode location. Please check city, state, and country information."}
-        lat, lon = coordinates
+        # Get coordinates either from provided coordinates or by geocoding
+        if coordinates:
+            lat = coordinates.get('latitude')
+            lon = coordinates.get('longitude')
+            if lat is None or lon is None:
+                return {"error": "Invalid coordinates: latitude and longitude are required"}
+            print(f"Using provided coordinates: lat={lat}, lon={lon}")
+        else:
+            coord_result = get_coordinates(birth_city, birth_state, birth_country)
+            if not coord_result:
+                error_msg = f"Could not geocode location. Please check city, state, and country information. Provided: city='{birth_city}', state='{birth_state}', country='{birth_country}'"
+                print(f"Geocoding failed: {error_msg}")
+                return {"error": error_msg}
+            lat, lon = coord_result
         time_data = convert_to_utc(birth_date, birth_time, timezone)
         if not time_data:
             return {"error": "Could not convert time to UTC"}
@@ -162,7 +174,7 @@ def calculate_chart(
             # This preserves the natal angular framework (AC/DC/MC/IC) on the new date
             jd_transit = swe.julday(prog_dt.year, prog_dt.month, prog_dt.day, 
                                    hour + minute/60.0 + second/3600.0)
-            from backend.ephemeris_utils import get_positions
+            from ephemeris_utils import get_positions
             # For CCG, calculate specified planets as progressions
             planets_data = []
             progressed_planets = []

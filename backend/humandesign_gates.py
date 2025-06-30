@@ -116,7 +116,8 @@ def get_gate_from_longitude(longitude):
                     "gate": gate_info["gate"],
                     "name": gate_info["name"],
                     "sign": gate_info["sign"],
-                    "longitude_start": start,                    "longitude_end": end
+                    "longitude_start": start,
+                    "longitude_end": end
                 }
     
     # Should not reach here, but return None if no gate found

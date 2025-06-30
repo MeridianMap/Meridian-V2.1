@@ -61,7 +61,7 @@ def test_transit_lines():
     try:
         response = requests.post(astro_url, json=transit_payload, timeout=30)
         print(f"Response status: {response.status_code}")
-          if response.status_code == 200:
+        if response.status_code == 200:
             data = response.json()
             
             if "features" in data:

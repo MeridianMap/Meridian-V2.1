@@ -9,43 +9,54 @@ export default function useCCGData(layerManager, forceMapUpdate) {
     setError(null);
     setLoadingStep('ephemeris');
     try {
-      const chartResult = await axios.post('/api/calculate', {
-        ...formData,
-        progressed_for: ["Sun", "Moon", "Mercury", "Venus", "Mars"],
-        progression_method: "secondary",
-        progressed_date: ccgDate
-      });
-      setLoadingStep('astro');
-      const astroRes = await axios.post('/api/astrocartography', {
-        birth_date: formData.birth_date,
+      console.log('🟦 fetchCCG called with:', { formData, ccgDate });
+      
+      // Validate required fields
+      if (!formData.birth_date || !formData.birth_time || !formData.timezone) {
+        throw new Error('Missing required birth data for CCG calculation');
+      }
+      
+      const ccgPayload = {
+        name: `${formData.name || 'CCG'} - CCG`,
+        birth_date: ccgDate, // Use CCG date instead of birth date
         birth_time: formData.birth_time,
-        coordinates: chartResult.data.coordinates,
-        planets: chartResult.data.planets,
-        utc_time: chartResult.data.utc_time,
-        lots: chartResult.data.lots,
-        include_parans: true,
-        include_angles: ["AC", "DC", "MC", "IC"],
-        include_aspects: false,
-        filter_options: {
-          layer_type: "CCG",
-          include_parans: true,
-          include_ac_dc: true,
-          include_ic_mc: true,
-          include_aspects: false,
-          include_fixed_stars: false,
-          subLayers: {
-            ac_dc: layerManager.isSubLayerVisible('CCG', 'ac_dc'),
-            ic_mc: layerManager.isSubLayerVisible('CCG', 'ic_mc'),
-            parans: layerManager.isSubLayerVisible('CCG', 'parans'),
-            lots: layerManager.isSubLayerVisible('CCG', 'lots')
-          }
-        }
-      });
-      layerManager.setLayerData('CCG', astroRes.data);
-      layerManager.setLayerVisible('CCG', true);
-      forceMapUpdate();
+        birth_city: formData.birth_city,
+        birth_state: formData.birth_state,
+        birth_country: formData.birth_country,
+        timezone: formData.timezone,
+        use_extended_planets: true,
+        layer_type: 'CCG' // Add layer type for backend tagging
+      };
+      
+      console.log('🟦 CCG API payload:', ccgPayload);
+      const chartResult = await axios.post('/api/calculate', ccgPayload);
+      console.log('🟦 CCG chart result:', chartResult.data);
+      
+      // Use the astrocartography data from the chart response
+      if (chartResult.data.astrocartography) {
+        // Tag all features with CCG layer type
+        const taggedData = {
+          ...chartResult.data.astrocartography,
+          features: chartResult.data.astrocartography.features.map(f => ({
+            ...f,
+            properties: {
+              ...f.properties,
+              layer: 'CCG'
+            }
+          }))
+        };
+        
+        layerManager.setLayerData('CCG', taggedData);
+        layerManager.setLayerVisible('CCG', true);
+        forceMapUpdate();
+        console.log('🟦 CCG data set with', taggedData.features.length, 'features');
+      } else {
+        console.log('🟦 No astrocartography data in CCG response');
+      }
+      
       setLoadingStep('done');
-    } catch {
+    } catch (error) {
+      console.error('🟦 CCG error:', error);
       setError('Failed to generate CCG overlay.');
       setLoadingStep(null);
     }

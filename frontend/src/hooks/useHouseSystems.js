@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getHouseSystems } from '../apiClient';
 
 const useHouseSystems = () => {
   const [houseSystems, setHouseSystems] = useState([]);
@@ -9,23 +10,12 @@ const useHouseSystems = () => {
     const fetchHouseSystems = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/house-systems');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await getHouseSystems();
         setHouseSystems(data.house_systems || []);
         setError(null);
       } catch (err) {
         console.error('Error fetching house systems:', err);
         setError(err.message);
-        // Fallback to basic house systems if API fails
-        setHouseSystems([
-          { id: 'whole_sign', name: 'Whole Sign', description: 'Each zodiac sign equals one house' },
-          { id: 'placidus', name: 'Placidus', description: 'Most popular modern system' },
-          { id: 'koch', name: 'Koch', description: 'Similar to Placidus' },
-          { id: 'equal', name: 'Equal House', description: 'Equal 30° segments from Ascendant' }
-        ]);
       } finally {
         setLoading(false);
       }

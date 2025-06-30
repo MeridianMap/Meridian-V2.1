@@ -1,7 +1,6 @@
 import React from 'react';
 
 function TransitControls({
-  isTransitEnabled,
   layerManager,
   forceMapUpdate,
   handleGenerateTransits,

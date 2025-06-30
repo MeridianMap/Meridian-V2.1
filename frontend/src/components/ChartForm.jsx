@@ -1,23 +1,59 @@
-import React, { useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { getHouseSystems, calculateChart } from '../apiClient';
 import useCitySuggestions from '../hooks/useCitySuggestions';
-import useHouseSystems from '../hooks/useHouseSystems';
 
-function ChartForm({ formData, setFormData, onSubmit, error }) {
-  const dropdownRef = useRef(null);  const {
+function ChartForm({ formData, setFormData, setChartData, setLoading, setProgress, setError, error, onSubmit }) {
+  const dropdownRef = useRef(null);
+  const {
     suggestions,
     showSuggestions,
     handleInputChange,
     handleSuggestionSelect
   } = useCitySuggestions(formData, setFormData);
   
-  const { houseSystems, loading: houseSystemsLoading } = useHouseSystems();
+  const [houseSystems, setHouseSystems] = useState([]);
+  const [houseSystemsLoading, setHouseSystemsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHouseSystems = async () => {
+      try {
+        const systems = await getHouseSystems();
+        setHouseSystems(systems.house_systems || []);
+      } catch (err) {
+        console.error(err);
+        setError('Could not load house systems.');
+      } finally {
+        setHouseSystemsLoading(false);
+      }
+    };
+    fetchHouseSystems();
+  }, [setError]);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setProgress(10);
+    try {
+      const chart = await calculateChart(formData);
+      if (chart.error) throw new Error(chart.error);
+      setChartData(chart);
+      setProgress(100);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      setProgress(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit || handleSubmit}>
       <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleFormChange} required />
       <input type="date" name="birth_date" value={formData.birth_date} onChange={handleFormChange} required />
       <input type="time" name="birth_time" value={formData.birth_time} onChange={handleFormChange} required />

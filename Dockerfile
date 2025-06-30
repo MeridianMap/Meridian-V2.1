@@ -36,7 +36,7 @@ RUN npm ci --only=production
 
 # Copy frontend source and build
 COPY frontend .
-RUN npm run build
+RUN rm -rf node_modules package-lock.json && npm install && npm run build
 
 # --- Final production stage ---
 FROM python:3.11-slim

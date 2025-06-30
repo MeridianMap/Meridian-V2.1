@@ -34,10 +34,10 @@ function getDef(type, key) {
 }
 
 const renderDefLine = (label, def) => (
-  <div style={{ marginBottom: 2 }}>
+  <React.Fragment>
     <b>{label}</b>
     {def && <span style={{ fontStyle: "italic", color: "#888", marginLeft: 4 }}>– {def}</span>}
-  </div>
+  </React.Fragment>
 );
 
 function parseLabel(label) {
@@ -82,13 +82,29 @@ function getOrdinalSuffix(num) {
   return `${num}th`;
 }
 
+// Helper function to get human-readable layer name
+function getLayerDisplayName(layerName) {
+  switch (layerName) {
+    case 'natal': return 'Natal';
+    case 'CCG': return 'CCG';
+    case 'transit': return 'Transit';
+    case 'HD_DESIGN': return 'Design';
+    default: return layerName || 'Natal';
+  }
+}
+
 const AstroTooltipContent = ({ feat, label }) => {
   if (!feat || !feat.properties) return <b>{label}</b>;
   const { planet, type, star, planets, angles } = feat.properties;
   const lines = [];
 
-  // Main label
-  lines.push(<div key="main" style={{ marginBottom: 4 }}><b>{label}</b></div>);
+  // Get layer information
+  const layerName = feat.layerName || 'natal';
+  const layerDisplayName = getLayerDisplayName(layerName);
+  
+  // Main label with layer indicator
+  const labelWithLayer = `${layerDisplayName} ${label}`;
+  lines.push(<div key="main" style={{ marginBottom: 4 }}><b>{labelWithLayer}</b></div>);
   const labelParts = parseLabel(label);
   const alreadyRendered = new Set();
 
@@ -296,7 +312,7 @@ const AstroTooltipContent = ({ feat, label }) => {
     }
   }
 
-  return <div style={{ lineHeight: 1.4 }}>{lines}</div>;
+  return <div style={{ lineHeight: 1.4 }}>{lines.map((line, index) => <div key={index} style={{ marginBottom: 2 }}>{line}</div>)}</div>;
 };
 
 export default AstroTooltipContent;

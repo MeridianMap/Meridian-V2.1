@@ -1,5 +1,6 @@
 # Fixed star calculation module using Swiss Ephemeris
 import swisseph as swe
+from ephemeris_utils import ensure_ephemeris_path
 
 # List of fixed stars and their Swiss Ephemeris names
 FIXED_STARS = [
@@ -11,7 +12,7 @@ FIXED_STARS = [
     {"name": "Alnilam", "swe_name": "Alnilam"},
     {"name": "Alnitak", "swe_name": "Alnitak"},
     {"name": "Bellatrix", "swe_name": "Bellatrix"},
-    {"name": "Betelgeuse", "swe_name": "Betelgeuze"},  # SE uses 'Betelgeuze'
+    {"name": "Betelgeuse", "swe_name": "Betelgeuse"},  # Use the name from sefstars.txt
     {"name": "Mintaka", "swe_name": "Mintaka"},
     {"name": "Rigel", "swe_name": "Rigel"},
     {"name": "Unukalhai", "swe_name": "Unukalhai"},
@@ -61,6 +62,7 @@ def get_fixed_star_positions(jd):
     results = []
     for star in FIXED_STARS:
         try:
+            ensure_ephemeris_path()
             # Use Swiss Ephemeris to get star position (longitude, latitude)
             # swe.fixstar returns (pos, starname, starret)
             ret = swe.fixstar(star["swe_name"], jd, flags=swe.FLG_SWIEPH)

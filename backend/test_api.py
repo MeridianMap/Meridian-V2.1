@@ -15,7 +15,9 @@ import signal
 test_data = {
     "birth_date": "1990-01-01",
     "birth_time": "12:00",
-    "birth_location": "New York, USA",
+    "birth_city": "New York",
+    "birth_state": "NY",
+    "birth_country": "USA",
     "timezone": "America/New_York",
     "house_system": "whole_sign"
 }
@@ -39,7 +41,7 @@ def test_backend_api():
     try:
         # Test health check endpoint
         print("\nTesting health check endpoint...")
-        health_response = requests.get("http://localhost:5000/health")
+        health_response = requests.get("http://localhost:5000/api/health")
         print(f"Health check status code: {health_response.status_code}")
         print(f"Health check response: {health_response.json()}")
         
@@ -79,7 +81,9 @@ def test_backend_api():
                 assert "house_system" in result["input"], f"'house_system' missing in input: {result['input']}"
                 assert result["input"]["date"] == test_data["birth_date"], "Birth date mismatch"
                 assert result["input"]["time"] == test_data["birth_time"], "Birth time mismatch"
-                assert result["input"]["city"] == test_data["birth_location"], "Birth location mismatch"
+                assert result["input"]["city"] == test_data["birth_city"], "Birth city mismatch"
+                assert result["input"]["state"] == test_data["birth_state"], "Birth state mismatch"
+                assert result["input"]["country"] == test_data["birth_country"], "Birth country mismatch"
                 assert result["input"]["timezone"] == test_data["timezone"], "Timezone mismatch"
                 assert result["input"]["house_system"] == test_data["house_system"], "House system mismatch"
             except Exception as e:

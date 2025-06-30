@@ -6,10 +6,18 @@ import swisseph as swe
 import time
 from functools import lru_cache
 
-swe.set_ephe_path(os.path.join(os.path.dirname(__file__), "ephe"))
+# Always use the same ephemeris path as api.py
+EPHE_PATH = os.path.join(os.path.dirname(__file__), "ephe")
+swe.set_ephe_path(EPHE_PATH)
+
+def ensure_ephemeris_path():
+    """Ensure Swiss Ephemeris always uses the correct path."""
+    swe.set_ephe_path(EPHE_PATH)
+    # Uncomment for debugging:
+    # print("[DEBUG] Swiss Ephemeris path now:", swe.get_ephe_path())
 
 # Define ephemeris file paths
-EPHEMERIS_DIR = os.path.expanduser("~/.swisseph")
+EPHEMERIS_DIR = EPHE_PATH  # Always use backend/ephe
 EPHEMERIS_URL = "https://www.astro.com/ftp/swisseph/ephe/"
 
 def ensure_ephemeris_dir():
@@ -21,37 +29,26 @@ def ensure_ephemeris_dir():
 
 
 def initialize_ephemeris():
-    import swisseph as swe
-    import os
-    ephe_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "ephe"))
-    swe.set_ephe_path(ephe_dir)
+    ensure_ephemeris_path()
     # ---- sanity check --------------------------------------------------
     EPHE_REQUIRED = [
         "sepl_18.se1",             # planets 1800-2399
         "seas_18.se1",             # main asteroids
         "sefstars.txt"             # fixed-star catalogue
     ]
-    missing = [f for f in EPHE_REQUIRED if not os.path.exists(os.path.join(ephe_dir, f))]
-    print("[EPHE] Using:", ephe_dir, "   missing:", missing)
+    missing = [f for f in EPHE_REQUIRED if not os.path.exists(os.path.join(EPHE_PATH, f))]
+    print("[EPHE] Using:", EPHE_PATH, "   missing:", missing)
     if missing:
         raise FileNotFoundError(
             "Swiss-Ephemeris cannot find: " + ", ".join(missing) +
             ".  Put them in backend/ephe or adjust swe.set_ephe_path."
         )
-    # --------------------------------------------------------------------
-
     try:
-        # ✅ Set to the correct local ephemeris directory
-        local_ephe_path = os.path.join(os.path.dirname(__file__), "ephe")
-        ephe_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "ephe"))
-        print(f"Swiss Ephemeris path set to: {ephe_path}")
-        swe.set_ephe_path(ephe_path)
-
-        # ✅ Just check for a key file
-        if not os.path.exists(os.path.join(local_ephe_path, "sepl_18.se1")):
+        print(f"Swiss Ephemeris path set to: {EPHE_PATH}")
+        ensure_ephemeris_path()
+        if not os.path.exists(os.path.join(EPHE_PATH, "sepl_18.se1")):
             print("Warning: sepl_18.se1 not found in /ephe folder.")
             print("Please ensure ephemeris files are correctly placed.")
-
         return True
     except Exception as e:
         print(f"Error initializing ephemeris: {e}")
@@ -106,6 +103,7 @@ ZODIAC_SIGNS = [
 ]
 
 def calculate_extended_planets(jd_ut, use_extended=False):
+    ensure_ephemeris_path()
     """
     Calculate planetary positions with option for extended set
     
@@ -199,6 +197,7 @@ def calculate_extended_planets(jd_ut, use_extended=False):
     return planets
 
 def get_positions(jd_ut, ids):
+    ensure_ephemeris_path()
     """
     Get planetary positions for the given Julian date and planet IDs.
     

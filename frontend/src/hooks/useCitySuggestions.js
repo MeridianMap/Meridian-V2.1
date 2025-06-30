@@ -19,6 +19,7 @@ function useCitySuggestions(formData, setFormData) {
         setSuggestions(result.data.results);
         setShowSuggestions(true);
       } catch (err) {
+        console.error("Failed to fetch city suggestions:", err);
         setSuggestions([]);
         setShowSuggestions(false);
       }

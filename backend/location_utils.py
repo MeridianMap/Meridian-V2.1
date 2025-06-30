@@ -102,15 +102,29 @@ def get_coordinates(city, state="", country=""):
             query_parts.append(state)
         if country:
             query_parts.append(country)
+        
+        if not query_parts:
+            print("Error: No location information provided")
+            return None
+            
         if len(query_parts) == 1:
-            location_data = geolocator.geocode(query_parts[0], exactly_one=False, timeout=10)
+            query = query_parts[0]
+            print(f"Geocoding single location: '{query}'")
+            location_data = geolocator.geocode(query, exactly_one=False, timeout=10)
             if location_data and len(location_data) > 0:
-                return (location_data[0].latitude, location_data[0].longitude)
+                lat, lon = location_data[0].latitude, location_data[0].longitude
+                print(f"Geocoding successful: {lat}, {lon}")
+                return (lat, lon)
         else:
             query = ", ".join(query_parts)
+            print(f"Geocoding full location: '{query}'")
             location_data = geolocator.geocode(query, timeout=10)
             if location_data:
-                return (location_data.latitude, location_data.longitude)
+                lat, lon = location_data.latitude, location_data.longitude
+                print(f"Geocoding successful: {lat}, {lon}")
+                return (lat, lon)
+        
+        print(f"Geocoding failed: No results found for '{query if 'query' in locals() else query_parts}'")
         return None
     except (GeocoderTimedOut, GeocoderServiceError) as e:
         print(f"Geocoding error (timeout/service): {e}")

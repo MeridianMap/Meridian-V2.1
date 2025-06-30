@@ -157,8 +157,15 @@ const AstroMap = ({ data, paransData }) => {
   const [highlightCircle, setHighlightCircle] = useState(null);
 
   // Debug logging
-  console.log('AstroMap render - data features:', data?.features?.length || 0);
-  console.log('AstroMap render - transit features:', data?.features?.filter(f => f.layerName === 'transit')?.length || 0);
+  console.log('🗺️ AstroMap render - data features:', data?.features?.length || 0);
+  console.log('🗺️ AstroMap render - transit features:', data?.features?.filter(f => f.layerName === 'transit')?.length || 0);
+  console.log('🗺️ AstroMap render - data structure:', {
+    hasData: !!data,
+    hasFeatures: !!data?.features,
+    featuresLength: data?.features?.length,
+    dataKeys: data ? Object.keys(data) : [],
+    firstFeatureKeys: data?.features?.[0] ? Object.keys(data.features[0]) : []
+  });
   
   // Merge features from astrocartography and parans (if present)
   const mergedFeatures = React.useMemo(() => {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { calculateChart } from '../apiClient';
 
 export default function useChartData(timeManager) {
   const [response, setResponse] = useState(null);
@@ -10,21 +10,24 @@ export default function useChartData(timeManager) {
     setError(null);
     setLoadingStep('ephemeris');
     try {
-      const chartResult = await axios.post('/api/calculate', {
-        ...formData,
-        use_extended_planets: true
+      console.log('🚀 Calling calculateChart with:', formData);
+      const chartResult = await calculateChart({ ...formData, use_extended_planets: true });
+      console.log('✅ Chart result received:', {
+        keys: Object.keys(chartResult),
+        astrocartography_features: chartResult.astrocartography?.features?.length || 0,
+        chart_data_keys: Object.keys(chartResult.chart_data || {}),
       });
-      setResponse(chartResult.data);
-      timeManager.setNatalTime({
+      setResponse(chartResult);
+      timeManager.setNatalTime && timeManager.setNatalTime({
         birth_date: formData.birth_date,
         birth_time: formData.birth_time,
         timezone: formData.timezone,
-        coordinates: chartResult.data.coordinates
+        coordinates: chartResult.coordinates
       });
       setLoadingStep('done');
-      return chartResult.data;
+      return chartResult;
     } catch (e) {
-      setError('Failed to generate chart.');
+      setError(e.message || 'Failed to generate chart.');
       setLoadingStep(null);
       return null;
     }

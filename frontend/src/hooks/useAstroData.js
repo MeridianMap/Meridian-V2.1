@@ -23,7 +23,7 @@ export default function useAstroData(layerManager, forceMapUpdate) {
         include_ac_dc: true,
         include_ic_mc: true
       };
-      const res = await axios.post('/api/astrocartography', payload);
+      const res = await axios.post('/api/calculate', payload);
       setAstroData(res.data);
       layerManager.setLayerData('natal', res.data);
       forceMapUpdate();

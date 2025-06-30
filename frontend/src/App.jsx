@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import React, { useState, useEffect } from 'react';
 import './App.css'
 import AstroMap from './Astromap';
 import LayerManager from './utils/LayerManager';
@@ -40,8 +39,8 @@ function App() {
     timezone: '',
     house_system: 'whole_sign' // Default house system
   })  // Replace chart, astro, transit, and CCG state/handlers with hooks
-  const { response, loadingStep: chartLoading, error: chartError, fetchChart } = useChartData(timeManager);
-  const { astroData, fetchAstro, loading: astroLoading } = useAstroData(layerManager, forceMapUpdate);
+  const { response, loadingStep: chartLoading, error, fetchChart, setError } = useChartData(timeManager);
+  const { astroData, setAstroData } = useAstroData(layerManager, forceMapUpdate);
   const { isTransitEnabled, fetchTransits, loadingStep: transitLoading } = useTransitData(layerManager, forceMapUpdate, timeManager);
   const { fetchCCG, loadingStep: ccgLoading } = useCCGData(layerManager, forceMapUpdate);
   const { fetchHumanDesign, loadingStep: hdLoading } = useHumanDesignData(layerManager, forceMapUpdate);
@@ -56,8 +55,6 @@ function App() {
   // Combine all loading states for display
   const activeLoadingStep = overallProgress.step || chartLoading || transitLoading || ccgLoading || hdLoading;
   const loadingStep = activeLoadingStep;
-  const error = chartError;
-
   // Initialize layers
   React.useEffect(() => {
     // Set up natal layer
@@ -248,9 +245,22 @@ function App() {
       const chartData = await fetchChart(formData);
       
       if (chartData) {
-        // Step 2: Generate astrocartography
-        setOverallProgress({ step: 'astro', percentage: 60, message: 'Generating astrocartography lines...' });
-        await fetchAstro(formData, chartData);
+        // Step 2: Use astrocartography data from chart response
+        setOverallProgress({ step: 'astro', percentage: 60, message: 'Processing astrocartography lines...' });
+        
+        // Set the astrocartography data from the chart response instead of making another API call
+        if (chartData.astrocartography) {
+          console.log('🎯 Setting astrocartography data from chart response:', {
+            features: chartData.astrocartography.features?.length || 0,
+            dataKeys: Object.keys(chartData.astrocartography)
+          });
+          setAstroData(chartData.astrocartography);
+          // Set the data in layer manager
+          layerManager.setLayerData('natal', chartData.astrocartography);
+          forceMapUpdate();
+        } else {
+          console.log('❌ No astrocartography data in chart response');
+        }
         
         // Step 3: Complete
         setOverallProgress({ step: 'done', percentage: 100, message: 'Chart generation complete!' });
@@ -355,11 +365,21 @@ function App() {
     }
     // CCG overlay - simplified filtering using unified controls
     const ccgLayer = layerManager.getLayer('CCG');
+    console.log('🟦 CCG Layer Debug:', {
+      isVisible: layerManager.isLayerVisible('CCG'),
+      hasLayer: !!ccgLayer,
+      hasData: !!(ccgLayer && ccgLayer.data),
+      hasFeatures: !!(ccgLayer && ccgLayer.data && ccgLayer.data.features),
+      featuresCount: ccgLayer?.data?.features?.length || 0,
+      firstFeatureLayer: ccgLayer?.data?.features?.[0]?.properties?.layer,
+      firstFeatureProps: ccgLayer?.data?.features?.[0]?.properties
+    });
     if (layerManager.isLayerVisible('CCG') && ccgLayer && ccgLayer.data && ccgLayer.data.features) {
       let ccgFeatures = ccgLayer.data.features;
+      // Don't filter by layer property initially - let's see all features
       ccgFeatures = ccgFeatures.filter(f => {
-        // FIRST: Only process features that are properly tagged as CCG
-        if (f.properties?.layer !== 'CCG') return false;
+        // Remove the layer check temporarily for debugging
+        // if (f.properties?.layer !== 'CCG') return false;
         
         const cat = f.properties?.category;
         const lineType = f.properties?.line_type;
@@ -396,18 +416,27 @@ function App() {
         
         return true;
       });
+      console.log('🟦 Final CCG features count:', ccgFeatures.length);
       features = features.concat(ccgFeatures.map(f => ({ ...f, layerName: 'CCG' })));
     }
 
     // Human Design overlay - filtering using unified controls
     const hdLayer = layerManager.getLayer('HD_DESIGN');
-    console.log('[DEBUG] HD Layer in mergedFilteredData:', hdLayer);
+    console.log('🟣 HD Layer Debug:', {
+      isVisible: layerManager.isLayerVisible('HD_DESIGN'),
+      hasLayer: !!hdLayer,
+      hasData: !!(hdLayer && hdLayer.data),
+      hasFeatures: !!(hdLayer && hdLayer.data && hdLayer.data.features),
+      featuresCount: hdLayer?.data?.features?.length || 0,
+      firstFeatureLayer: hdLayer?.data?.features?.[0]?.properties?.layer,
+      firstFeatureProps: hdLayer?.data?.features?.[0]?.properties
+    });
     if (layerManager.isLayerVisible('HD_DESIGN') && hdLayer && hdLayer.data && hdLayer.data.features) {
-      console.log('[DEBUG] HD Layer visible and has data, features count:', hdLayer.data.features.length);
+      console.log('🟣 HD Layer visible and has data, features count:', hdLayer.data.features.length);
       let hdFeatures = hdLayer.data.features;
       hdFeatures = hdFeatures.filter(f => {
-        // FIRST: Only process features that are properly tagged as HD_DESIGN
-        if (f.properties?.layer !== 'HD_DESIGN') return false;
+        // Remove the layer check temporarily for debugging
+        // if (f.properties?.layer !== 'HD_DESIGN') return false;
         
         const cat = f.properties?.category;
         const lineType = f.properties?.line_type;
@@ -454,29 +483,33 @@ function App() {
         
         return true;
       });
-      console.log('[DEBUG] HD Features after filtering:', hdFeatures.length);
+      console.log('🟣 HD Features after filtering:', hdFeatures.length);
       features = features.concat(hdFeatures.map(f => ({ ...f, layerName: 'HD_DESIGN' })));
     }
 
     // Transit Overlay
     if (layerManager.isLayerVisible('transit')) {
-      console.log('Transit layer is visible, processing transit data...');
+      console.log('🟪 Transit layer is visible, processing transit data...');
       const transitData = layerManager.getLayer('transit')?.data;
-      console.log('Transit data from layer manager:', transitData);
+      console.log('🟪 Transit data from layer manager:', {
+        hasTransitData: !!transitData,
+        featuresCount: transitData?.features?.length || 0,
+        firstFeatureLayer: transitData?.features?.[0]?.properties?.layer,
+        firstFeatureProps: transitData?.features?.[0]?.properties
+      });
       let transitFeatures = transitData?.features || [];
-      console.log('Transit features before filtering:', transitFeatures.length);
+      console.log('🟪 Transit features before filtering:', transitFeatures.length);
       
       transitFeatures = transitFeatures.filter(f => {
         try {
           // Defensive null checks
           if (!f || !f.properties) return false;
           
-          console.log('Processing transit feature:', f.properties);
-          
-          if (f.properties?.layer !== 'transit') {
-            console.log('Feature filtered out - not transit layer:', f.properties?.layer);
-            return false;
-          }
+          // Remove the layer check temporarily for debugging
+          // if (f.properties?.layer !== 'transit') {
+          //   console.log('Feature filtered out - not transit layer:', f.properties?.layer);
+          //   return false;
+          // }
           
           const cat = f.properties?.category;
           const lineType = f.properties?.line_type;
@@ -511,12 +544,14 @@ function App() {
             if (body && transitBodyToggles[body] === false) return false;
           }
           
+          console.log('🟪 Transit features after filtering:', transitFeatures.length);
           return true;
         } catch (err) {
           console.error('Error filtering transit feature:', err, f);
           return false; // Filter out problematic features
         }
       });
+      console.log('🟪 Final transit features count:', transitFeatures.length);
       features = features.concat(transitFeatures.map(f => ({ ...f, layerName: 'transit' })));
     }
 
@@ -576,7 +611,16 @@ function App() {
         </pre>
       )}
       <h1>Meridian V2</h1>
-      <ChartForm formData={formData} setFormData={setFormData} onSubmit={handleSubmit} error={error} />      {loadingStep && (
+      <ChartForm
+        formData={formData}
+        setFormData={setFormData}
+        setChartData={() => {}} // This is now handled by the hook
+        setLoading={() => {}}   // This is now handled by the hook
+        setProgress={() => {}}  // This is now handled by the hook
+        setError={setError}
+        error={error}
+        onSubmit={handleSubmit}
+      />      {loadingStep && (
         <div className="progress-container">
           <div className="progress-bar">
             <div className="progress-fill" style={{

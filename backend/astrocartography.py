@@ -2,28 +2,15 @@ from typing import Dict, List
 import swisseph as swe
 import traceback
 
-# Import with proper backend paths
-try:
-    from backend.hermetic_lots import calculate_hermetic_lots
-    from backend.fixed_star import get_fixed_star_positions, FIXED_STARS
-    from backend.line_parans import find_line_crossings_and_latitude_lines
-    from backend.line_ac_dc import generate_horizon_lines
-    from backend.line_ic_mc import calculate_mc_line, calculate_ic_line
-    from backend.line_aspects import calculate_aspect_lines
-    from backend.point_influence import calculate_point_influences
-    from backend.ephemeris_utils import initialize_ephemeris
-    from backend.humandesign_gates import get_gate_from_longitude, get_gate_line_from_longitude
-except ImportError:
-    # Fallback for when running from backend directory
-    from hermetic_lots import calculate_hermetic_lots
-    from fixed_star import get_fixed_star_positions, FIXED_STARS
-    from line_parans import find_line_crossings_and_latitude_lines
-    from line_ac_dc import generate_horizon_lines
-    from line_ic_mc import calculate_mc_line, calculate_ic_line
-    from line_aspects import calculate_aspect_lines
-    from point_influence import calculate_point_influences
-    from ephemeris_utils import initialize_ephemeris
-    from humandesign_gates import get_gate_from_longitude, get_gate_line_from_longitude
+from hermetic_lots import calculate_hermetic_lots
+from fixed_star import get_fixed_star_positions, FIXED_STARS
+from line_parans import find_line_crossings_and_latitude_lines
+from line_ac_dc import generate_horizon_lines
+from line_ic_mc import calculate_mc_line, calculate_ic_line
+from line_aspects import calculate_aspect_lines
+from point_influence import calculate_point_influences
+from ephemeris_utils import initialize_ephemeris, ensure_ephemeris_path
+from humandesign_gates import get_gate_from_longitude, get_gate_line_from_longitude
 
 import numpy as np
 
@@ -33,10 +20,7 @@ initialize_ephemeris()
 # --- Hermetic Lot lines (MC/IC only) ---
 def calculate_lot_lines(jd, lots):
     # Import here to avoid circular import
-    try:
-        from backend.humandesign_gates import get_gate_from_longitude, get_gate_line_from_longitude
-    except ImportError:
-        from humandesign_gates import get_gate_from_longitude, get_gate_line_from_longitude
+    from humandesign_gates import get_gate_from_longitude, get_gate_line_from_longitude
     
     features = []
     for lot in lots:
@@ -150,6 +134,7 @@ def generate_all_astrocartography_features(chart_data: Dict, filter_options: Dic
             else:
                 # Use Swiss Ephemeris for natal planets or fallback
                 try:
+                    ensure_ephemeris_path()
                     ppos, _ = swe.calc_ut(jd, pid, swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)
                     ra_planet = ppos[0]
                     print(f"[DEBUG] Calculated RA for {pname}: {ra_planet}")

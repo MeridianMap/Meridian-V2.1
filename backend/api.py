@@ -11,23 +11,24 @@ import os
 import swisseph as swe
 import logging
 
-# Unset SE_EPHE_PATH to avoid conflicts
-if "SE_EPHE_PATH" in os.environ:
-    del os.environ["SE_EPHE_PATH"]
-
-# Force ephemeris path to backend/ephe
-swe.set_ephe_path(os.path.join(os.path.dirname(__file__), "ephe"))
+# Set ephemeris path to always use backend/ephe, ignoring environment variable
+EPHE_PATH = os.path.join(os.path.dirname(__file__), "ephe")
+swe.set_ephe_path(EPHE_PATH)
+logging.basicConfig(level=logging.INFO)
+logging.info(f"Swiss Ephemeris path set to: '{EPHE_PATH}' (exists: {os.path.exists(EPHE_PATH)})")
+if not os.path.exists(os.path.join(EPHE_PATH, "sefstars.txt")):
+    logging.error(f"sefstars.txt not found in {EPHE_PATH}. Check ephemeris data files.")
 
 # Add the parent directory to the path so we can import the modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from backend.ephemeris import calculate_chart
-from backend.location_utils import get_location_suggestions, detect_timezone_from_coordinates
-from backend.astrocartography import calculate_astrocartography_lines_geojson
-from backend.utils import filter_lines_near_location
-# Import Human Design layer support
-from backend.layers.humandesign import calculate_human_design_layer
-# from backend.parans import calculate_parans
-from backend.house_systems import get_house_system_choices, get_house_systems_by_category, get_default_house_system, get_recommended_house_systems, HOUSE_SYSTEM_INFO
+
+# Docker/container imports (when running from /app directory)
+from ephemeris import calculate_chart
+from location_utils import get_location_suggestions, detect_timezone_from_coordinates
+from astrocartography import calculate_astrocartography_lines_geojson
+from utils import filter_lines_near_location
+from layers.humandesign import calculate_human_design_layer
+from house_systems import get_house_system_choices, get_house_systems_by_category, get_default_house_system, get_recommended_house_systems, HOUSE_SYSTEM_INFO
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -35,26 +36,53 @@ CORS(app)  # Enable CORS for all routes
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
+@app.route("/")
+def index():
+    return {"status": "Meridian API running"}, 200
+
+@app.route("/api/health")
+def health():
+    return {"ok": True}, 200
+
 @app.route('/api/calculate', methods=['POST'])
 def api_calculate_chart():
+    app.logger.info("▶️  /api/calculate")
     try:
-        data = request.get_json()
-        print(f"[DEBUG] Calculate endpoint received data: {data}")
-        # Log progressed_date and its type
-        progressed_date = data.get('progressed_date')
-        print(f"[DEBUG] progressed_date: {progressed_date} (type: {type(progressed_date)})")
+        data = request.get_json(force=True)
+        app.logger.info(f"Calculate endpoint received data: {data}")
+        
+        # Extract data with defaults
         birth_date = data.get('birth_date')
         birth_time = data.get('birth_time')
         birth_city = data.get('birth_city')
         birth_state = data.get('birth_state', '')
         birth_country = data.get('birth_country', '')
+        coordinates = data.get('coordinates')  # Support coordinate-based requests
         timezone = data.get('timezone')
         house_system = data.get('house_system', 'whole_sign')
         use_extended_planets = data.get('use_extended_planets', False)
         progressed_for = data.get('progressed_for')
         progression_method = data.get('progression_method', 'secondary')
-        # Defensive: print all incoming params
-        print(f"[DEBUG] Params: birth_date={birth_date}, birth_time={birth_time}, city={birth_city}, tz={timezone}, progressed_for={progressed_for}, progression_method={progression_method}")
+        progressed_date = data.get('progressed_date')
+
+        # Validate required fields
+        if not birth_date:
+            app.logger.error("Missing required field: birth_date")
+            return jsonify({"error": "birth_date is required"}), 400
+        if not birth_time:
+            app.logger.error("Missing required field: birth_time")
+            return jsonify({"error": "birth_time is required"}), 400
+        
+        # Check if we have either city info OR coordinates
+        if not birth_city and not coordinates:
+            app.logger.error("Missing location: need either birth_city or coordinates")
+            return jsonify({"error": "Either birth_city or coordinates is required"}), 400
+
+        if coordinates:
+            app.logger.info(f"Using coordinates: lat={coordinates.get('latitude')}, lon={coordinates.get('longitude')}")
+        else:
+            app.logger.info(f"Location info: city='{birth_city}', state='{birth_state}', country='{birth_country}'")
+
         chart_data = calculate_chart(
             birth_date=birth_date,
             birth_time=birth_time,
@@ -66,16 +94,36 @@ def api_calculate_chart():
             use_extended_planets=use_extended_planets,
             progressed_for=progressed_for,
             progression_method=progression_method,
-            progressed_date=progressed_date
+            progressed_date=progressed_date,
+            coordinates=coordinates  # Pass coordinates if available
         )
+
         if "error" in chart_data:
-            print(f"[ERROR] Chart calculation error: {chart_data['error']}")
+            app.logger.error(f"Chart calculation error: {chart_data['error']}")
             return jsonify(chart_data), 400
+
+        # Add all astrocartography features with logging
+        try:
+            app.logger.info("Calling calculate_astrocartography_lines_geojson...")
+            astro_features = calculate_astrocartography_lines_geojson(chart_data, {
+                'include_aspects': True,
+                'include_fixed_stars': True,
+                'include_hermetic_lots': True,
+                'include_parans': True,
+                'include_ac_dc': True,
+                'include_ic_mc': True
+            })
+            feature_types = [f['properties'].get('category') for f in astro_features.get('features', [])]
+            app.logger.info(f"Astrocartography feature types: {set(feature_types)}")
+            app.logger.info(f"Astrocartography features generated: {len(astro_features.get('features', []))}")
+            chart_data['astrocartography'] = astro_features
+        except Exception as e:
+            app.logger.exception("Astrocartography calculation failed")
+            chart_data['astrocartography'] = {"error": str(e), "features": []}
+
         return jsonify(chart_data)
     except Exception as e:
-        import traceback
-        print(f"[EXCEPTION] /api/calculate: {e}")
-        traceback.print_exc()
+        app.logger.exception("Calculation failed")
         return jsonify({"error": str(e)}), 500
 
 
@@ -301,16 +349,22 @@ def api_parans():
     except Exception as e:
         return {"error": str(e)}, 500
 
+@app.route('/api/house-systems')
+def api_house_systems():
+    systems = [
+        {"id": "whole_sign", "name": "Whole Sign", "description": "Each zodiac sign equals one house"},
+        {"id": "placidus", "name": "Placidus", "description": "Most popular modern system"},
+        {"id": "koch", "name": "Koch", "description": "Similar to Placidus"},
+        {"id": "equal", "name": "Equal House", "description": "Equal 30° segments from Ascendant"}
+    ]
+    return jsonify({"house_systems": systems})
+
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     return response
-
-@app.route('/api/health')
-def health():
-    return jsonify({"status": "ok"})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
